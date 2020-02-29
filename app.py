@@ -10,7 +10,7 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtWidgets import QFileDialog, QMainWindow
 from main_window import Ui_MainWindow
 
-
+from cv2_gui import Cv2Gui
 
 class My_MainWindow(QMainWindow, Ui_MainWindow):
     def __init__(self):
@@ -25,64 +25,128 @@ class My_MainWindow(QMainWindow, Ui_MainWindow):
         # 按下 選路徑(btn_path) 按鈕
         self.btn_browse.pressed.connect(self.pressed_btn_path)
 
+        self.btn_run.pressed.connect(self.pressed_btn_run)
+
+
 
 
     # 按下 選路徑(btn_path) 按鈕的動作
     def pressed_btn_path(self):
         # files, filetype = QFileDialog.getOpenFileNames(self, "選取資料夾").replace('/', '\\')     # 開啟選取檔案的視窗
-        files, filetype = QFileDialog.getOpenFileNames(self,  "多文件选择", './', # 起始路径
-                                    "All Files (*);;Dicom Files (*.dcm);;Png Files (*.png);;JPEG Files (*.jpeg)")
+        files, filetype = QFileDialog.getOpenFileNames(self,  "選擇文件", './', # 起始路径
+                                                       "All Files (*);;Dicom Files (*.dcm);;Png Files (*.png);;JPEG Files (*.jpeg)")
 
 
-        # 如果讀取到 Dicom 檔
-        if files[0].split('.')[-1].lower() == 'dcm':
-            self.textBrowser_browse.setText(files[0])
+        if len(files) > 0:
+            # 如果讀取到 Dicom 檔
 
-            dicom = pydicom.read_file(files[0])
-            img = dicom.pixel_array[0]
-            num_of_img, h, w, _ = dicom.pixel_array.shape
+            if os.path.splitext(files[0])[-1].lower() == '.dcm':
+                file = files[0]
+                browse_path = file
+                self.filename = os.path.splitext(os.path.split(file)[-1])[0]
 
-            dt = dicom.AcquisitionDateTime
-            dt = datetime.datetime(int(dt[0:4]), int(dt[4:6]), int(dt[6:8]), int(dt[8:10]), int(dt[10:12]), int(dt[12:]))
+                dicom = pydicom.read_file(file)
+                self.IMGS = dicom.pixel_array
+                img_preview = self.IMGS[0]
+                num_of_img, h, w = self.IMGS.shape[:3]
 
-            # 讀取 delta x, delta y
-            if 'SequenceOfUltrasoundRegions' in dir(dicom):
-                self.DELTAX = dicom.SequenceOfUltrasoundRegions[0].PhysicalDeltaX
-                self.DELTAY = dicom.SequenceOfUltrasoundRegions[0].PhysicalDeltaY
+                filetype = '.dcm'
 
-            elif 'PixelSpacing' in dir(dicom):
-                self.DELTAX, self.DELTAY = dicom.PixelSpacing
+                # 讀取 dicom 的時間
+                if 'InstanceCreationDate' in dir(dicom):
+                    date = dicom.InstanceCreationDate
+                    date = datetime.date(int(date[:4]), int(date[4:6]), int(date[6:]))
+                if 'InstanceCreationTime' in dir(dicom):
+                    time = dicom.InstanceCreationTime
+                    time = datetime.time(int(time[:2]), int(time[2:4]), int(time[4:]))
 
+                # 讀取 dicom 中 儀器廠商
+                if 'ManufacturerModelName' in dir(dicom) and 'Manufacturer' in dir(dicom):
+                    system_name = dicom.Manufacturer + ' - ' + dicom.ManufacturerModelName
+                elif 'Manufacturer' in dir(dicom):
+                    system_name = dicom.Manufacturer
+                elif 'ManufacturerModelName' in dir(dicom):
+                    system_name = dicom.ManufacturerModelName
+                else:
+                    system_name = ''
+
+
+                    # 讀取 dicom 的 delta x, delta y
+                if 'SequenceOfUltrasoundRegions' in dir(dicom):
+                    deltax = dicom.SequenceOfUltrasoundRegions[0].PhysicalDeltaX
+                    deltay = dicom.SequenceOfUltrasoundRegions[0].PhysicalDeltaY
+
+                elif 'PixelSpacing' in dir(dicom):
+                    deltax, deltay = dicom.PixelSpacing
+
+                else:
+                    deltax, deltay = 0, 0
+
+            # 如果讀到圖檔
             else:
-                self.DELTAX, self.DELTAY = 0, 0
+                browse_path = os.path.split(files[0])[0]
+                self.filename = os.path.split(browse_path)[-1]
+
+                # 排序圖檔
+                files = np.asarray(files)
+                temp = np.asarray([int(file.split('.')[0].split('/')[-1]) for file in files])
+                temp = np.argsort(temp)
+                files = files[temp]
+                self.IMGS = np.asarray([cv2.imread(file) for file in files])
+                img_preview = self.IMGS[0]
+                num_of_img, h, w = self.IMGS.shape[:3]
+
+                filetype = '.' + files[0].split('.')[-1]
+
+                date = ''
+                time = ''
+
+                system_name = ''
+
+                deltax = 0
+                deltay = 0
 
 
-        # 如果讀到圖檔
-        elif len(files) > 0:
-            files = np.asarray(files)
-            temp = np.asarray([int(file.split('.')[0].split('/')[-1]) for file in files])
-            temp = np.argsort(temp)
-            files = files[temp]
+            self.textBrowser_browse.setText(browse_path)
 
-            img = cv2.imread(files[0])
-            dt = ''
-            h, w = img.shape[:2]
-            num_of_img = len(files)
-            self.DELTAX = 0
-            self.DELTAY = 0
+            # 顯示超音波廠商、根據字數調整 label size
+            self.label_manufacturer.setText(system_name)
+            self.label_manufacturer.adjustSize()
 
-        self.textBrowser_image_size.setText(str(w) + ' x ' + str(h))
-        self.textBrowser_datetime.setText(str(dt))
-        self.textBrowser_frame.setText(str(num_of_img))
-        self.textBrowser_delta_x.setText(str(self.DELTAX // 0.001) + ' mm')
-        self.textBrowser_delta_y.setText(str(self.DELTAY // 0.001) + ' mm')
+            self.label_filetype_show.setText(filetype)
+            self.label_image_size_show.setText(str(w) + ' x ' + str(h))
+            self.label_date_show.setText(str(date))
+            self.label_time_show.setText(str(time))
+            self.label_frame_show.setText(str(num_of_img))
+            self.textBrowser_delta_x.setText(str(deltax // 0.001) + ' mm')
+            self.textBrowser_delta_y.setText(str(deltay // 0.001) + ' mm')
+
+            # 建立預覽圖片、自適化調整
+            self.label_preview.setPixmap(QtGui.QPixmap(self.convert2qtimg(img_preview)))
+            self.label_preview.setScaledContents(True)
+
+        else:
+            # TODO 輸入格式錯的視窗
+            pass
 
 
-        # 建立預覽圖片、自適化調整
-        self.label_preview.setPixmap(QtGui.QPixmap(self.convert2qtimg(img)))
-        self.label_preview.setScaledContents(True)
 
-    # TODO 完善讀圖的時間與可修改 dx, dy
+    def pressed_btn_run(self):
+        # TODO 按下 run
+
+        kwargs = {
+            'imgs': self.IMGS,
+            'window_name': self.filename,
+            'delta_x': 0,
+            'delta_y': 0,
+            'temp_size': 32,
+            'default_search': 10
+        }
+
+        cv2_gui = Cv2Gui(**kwargs)
+        cv2_gui.main()
+
+
 
 
 
