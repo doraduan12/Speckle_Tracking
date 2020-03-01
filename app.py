@@ -40,7 +40,6 @@ class My_MainWindow(QMainWindow, Ui_MainWindow):
         files, filetype = QFileDialog.getOpenFileNames(self,  "選擇文件", './', # 起始路径
                                                        "All Files (*);;Dicom Files (*.dcm);;Png Files (*.png);;JPEG Files (*.jpeg)")
 
-
         if len(files) > 0:
             # 如果讀取到 Dicom 檔
 
@@ -122,8 +121,9 @@ class My_MainWindow(QMainWindow, Ui_MainWindow):
             self.label_date_show.setText(str(date))
             self.label_time_show.setText(str(time))
             self.label_frame_show.setText(str(num_of_img))
-            self.textBrowser_delta_x.setText(str(deltax // 0.001) + ' mm')
-            self.textBrowser_delta_y.setText(str(deltay // 0.001) + ' mm')
+            print(deltax, deltay)
+            self.textBrowser_delta_x.setText(str(deltax // 0.000001 / 1000))
+            self.textBrowser_delta_y.setText(str(deltay // 0.000001 / 1000))
 
             # 建立預覽圖片、自適化調整
             self.label_preview.setPixmap(QtGui.QPixmap(self.convert2qtimg(img_preview)))
@@ -138,18 +138,17 @@ class My_MainWindow(QMainWindow, Ui_MainWindow):
     def pressed_btn_run(self):
         # TODO 按下 run
 
+
         kwargs = {
             'imgs': self.IMGS,
             'window_name': self.filename,
-            'delta_x': 0,
-            'delta_y': 0,
+            'delta_x': float(self.textBrowser_delta_x.toPlainText())/1000,
+            'delta_y': float(self.textBrowser_delta_y.toPlainText())/1000,
             'temp_size': 32,
             'default_search': 10
         }
 
-        print(0.1)
         cv2_gui = Cv2Gui(**kwargs)
-        print(0.2)
         cv2_gui.main()
 
 

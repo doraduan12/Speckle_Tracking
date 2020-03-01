@@ -136,7 +136,7 @@ class Cv2Gui(Tools):
                 self.target_point.extend([self.point1, self.point2])
                 self.track_done.extend([False, False])
 
-                # 預設 ROI
+                # 計算預設的 search window
                 x, y = self.point1
                 s11, s12 = tool.get_search_window((x, y), (x + self.default_search//2, y+self.default_search//2))
                 x, y = self.point2
@@ -194,8 +194,7 @@ class Cv2Gui(Tools):
         cv2.destroyWindow(self.window_name) # （按 esc 跳出迴圈後）關閉視窗
 
 if __name__ == '__main__':
-    hello = Cv2_gui('')
-
+    pass
 
 
 
