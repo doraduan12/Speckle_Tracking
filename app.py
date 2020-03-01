@@ -12,6 +12,10 @@ from main_window import Ui_MainWindow
 
 from cv2_gui import Cv2Gui
 
+import cgitb
+cgitb.enable( format = 'text')
+
+
 class My_MainWindow(QMainWindow, Ui_MainWindow):
     def __init__(self):
         super().__init__()
@@ -143,9 +147,10 @@ class My_MainWindow(QMainWindow, Ui_MainWindow):
             'default_search': 10
         }
 
+        print(0.1)
         cv2_gui = Cv2Gui(**kwargs)
+        print(0.2)
         cv2_gui.main()
-
 
 
 

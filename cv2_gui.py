@@ -1,5 +1,6 @@
 import matplotlib.pyplot as plt
 import pydicom
+
 import cv2
 import numpy as np
 import time
@@ -8,16 +9,18 @@ from tools import Tools
 import os
 
 
+tool = Tools()
 
-class Cv2Gui():
+class Cv2Gui(Tools):
 
     def __init__(self, imgs:np, delta_x: float, delta_y: float, window_name: str,
                  temp_size: int=32, default_search: int=10):
+
         self.IMGS = imgs
         self.window_name = window_name
 
         self.current_page = 0
-        self.search_range = default_search
+        self.default_search = default_search
         self.temp_size = temp_size
 
         self.delta_x = delta_x
@@ -26,7 +29,7 @@ class Cv2Gui():
 
         print("The shape of dicom is :", self.IMGS.shape)
 
-        self.IMGS = self.addPage(self.IMGS)
+        self.IMGS = tool.addPage(self.IMGS)
         self.img_label = np.copy(self.IMGS)
         self.num_of_img, self.h, self.w, _ = self.IMGS.shape
 
@@ -35,7 +38,6 @@ class Cv2Gui():
         self.track_done = []
         self.roi_point = []  # -> list -> tuple
         self.roi_shift = []
-        self.search_point = []  # -> list -> tuple 目前沒用
         self.result_point = {}
 
         # 顯示
@@ -47,13 +49,6 @@ class Cv2Gui():
 
 
 
-    # 將 Dcm 檔影像加上圖片編號
-    def addPage(self, imgs: np) -> np:
-        for i in range(len(imgs)):
-            s = str(i) + '/' + str(len(imgs) - 1)
-            font = cv2.FONT_HERSHEY_SIMPLEX
-            cv2.putText(imgs[i], s, (0, 15), font, .5, (255, 255, 255), 2)
-        return imgs
 
     # 重置所有動作
     def reset(self):
@@ -63,7 +58,6 @@ class Cv2Gui():
         self.track_done = []
         self.roi_point = []
         self.roi_shift = []
-        self.search_point = []
         self.result_point = {}
 
         print('Reseting complete.')
@@ -79,24 +73,96 @@ class Cv2Gui():
         self.current_page = x
         cv2.imshow(self.window_name, self.img_label[self.current_page])
 
-    def click_event(self):
-        pass
+
+
+
+
+
+    # 滑鼠事件
+    def click_event(self, event, x, y, flags, param):
+
+        # 滾輪選擇照片
+        if event == cv2.EVENT_MOUSEWHEEL:
+            if flags < 0:
+                self.current_page = self.photo_switch('next', self.current_page, self.num_of_img)
+            elif flags > 0:
+                self.current_page = self.photo_switch('last', self.current_page, self.num_of_img)
+
+            # 更新 Trackbar，__track_change會更新圖片
+            cv2.setTrackbarPos('No', self.window_name, self.current_page)
+
+
+        # 劃出線段（左鍵點擊時）
+        if event == cv2.EVENT_LBUTTONDOWN:
+            self.mouse_drag = False
+            self.point1 = (x, y)  # 記錄起點
+
+        # 預覽線段（左鍵拖曳時）
+        elif flags == 1 & cv2.EVENT_FLAG_LBUTTON:
+            self.mouse_drag = True
+
+            # 複製目前畫面，在放開滑鼠之前都在複製畫面上作圖，否則會有許多線段互相覆蓋
+            temp_img = np.copy(self.img_label[self.current_page])
+            cv2.line(temp_img, self.point1, (x, y), (0, 0, 255), thickness=1)
+
+            # 計算距離、顯示距離的座標
+            text_point, d = tool.count_distance(self.point1, (x, y), self.delta)
+            font = cv2.FONT_HERSHEY_SIMPLEX
+            cv2.putText(temp_img, '{:4.3f}'.format(d), text_point, font, .5, (255, 255, 255), 1)
+
+            # 刷新畫面
+            cv2.imshow(self.window_name, temp_img)
+
+        # 確定線段（左鍵放開時）
+        elif event == cv2.EVENT_LBUTTONUP:
+            if self.mouse_drag:
+                self.mouse_drag = False  # 拖曳重置
+
+                # 紀錄 point2 的點
+                self.point2 = (x, y)
+
+                # 作圖
+                cv2.line(self.img_label[self.current_page], self.point1, self.point2, (0, 0, 255), thickness=1)
+                cv2.circle(self.img_label[self.current_page], self.point1, 0, (0, 0, 255), thickness=2)
+                cv2.circle(self.img_label[self.current_page], self.point2, 0, (0, 0, 255), thickness=2)
+
+                # 計算距離 -> 尚未加入 List TODO
+                text_point, d = tool.count_distance(self.point1, self.point2, self.delta)
+                font = cv2.FONT_HERSHEY_SIMPLEX
+                cv2.putText(self.img_label[self.current_page], '{:4.3f}'.format(d), text_point, font, .5,
+                            (255, 255, 255), 1)
+
+                # 新增點參數
+                self.target_point.extend([self.point1, self.point2])
+                self.track_done.extend([False, False])
+
+                # 預設 ROI
+                x, y = self.point1
+                s11, s12 = tool.get_search_window((x, y), (x + self.default_search//2, y+self.default_search//2))
+                x, y = self.point2
+                s21, s22 = tool.get_search_window((x, y), (x + self.default_search//2, y+self.default_search//2))
+
+                self.roi_point.extend([[s11, s12], [s21, s22]])
+                self.roi_shift.extend([(self.default_search // 2, self.default_search // 2), (self.default_search // 2, self.default_search // 2)])
+
+                print(self.point1, self.point2)
+
+                cv2.imshow(self.window_name, self.img_label[self.current_page])
+
+
+
 
     def main(self):
 
         while True:
-            print(1)
             cv2.setMouseCallback(self.window_name, self.click_event)  # 設定滑鼠回饋事件
-            print(1.2)
-            # TODO 疑似 pyqt5 無法進行外部無窮迴圈
-            action = t.find_ACTION(cv2.waitKey(1))    # 設定鍵盤回饋事件
 
-            print(2)
+            action = self.find_ACTION(cv2.waitKey(1))    # 設定鍵盤回饋事件
+
             # 「esc」 跳出迴圈
             if action == 'esc':
                 break
 
-            print(3)
             # 「r」 重置
             if action == 'reset':
                 self.reset()
@@ -122,11 +188,10 @@ class Cv2Gui():
                 print('dcm.track_done : ', dcm.track_done)
                 print('dcm.roi_point : ', dcm.roi_point)
                 print('dcm.roi_shift : ', dcm.roi_shift)
-                print('dcm.search_point : ', dcm.search_point)
                 print()
 
 
-        cv2.destroyAllWindows() # （按 esc 跳出迴圈後）關閉視窗
+        cv2.destroyWindow(self.window_name) # （按 esc 跳出迴圈後）關閉視窗
 
 if __name__ == '__main__':
     hello = Cv2_gui('')
