@@ -76,8 +76,6 @@ class Cv2Gui(Tools):
 
 
 
-
-
     # 滑鼠事件
     def click_event(self, event, x, y, flags, param):
 
@@ -138,9 +136,9 @@ class Cv2Gui(Tools):
 
                 # 計算預設的 search window
                 x, y = self.point1
-                s11, s12 = tool.get_search_window((x, y), (x + self.default_search//2, y+self.default_search//2))
+                s11, s12, _, _ = tool.get_search_window((x, y), (x + self.default_search//2, y+self.default_search//2), self.temp_size)
                 x, y = self.point2
-                s21, s22 = tool.get_search_window((x, y), (x + self.default_search//2, y+self.default_search//2))
+                s21, s22, _, _ = tool.get_search_window((x, y), (x + self.default_search//2, y+self.default_search//2), self.temp_size)
 
                 self.roi_point.extend([[s11, s12], [s21, s22]])
                 self.roi_shift.extend([(self.default_search // 2, self.default_search // 2), (self.default_search // 2, self.default_search // 2)])
@@ -150,10 +148,61 @@ class Cv2Gui(Tools):
                 cv2.imshow(self.window_name, self.img_label[self.current_page])
 
 
+        # 設定 Search Window（右鍵點擊時）
+        if event == cv2.EVENT_RBUTTONDOWN:
+            self.mouse_drag = False
+            # 計算點擊位置與各點之間的距離
+            target = np.asarray(self.target_point)
+            diff = target - np.asarray([x, y])
+            # 距離最近者為此次框 ROI 的點
+            self.t_point_index = np.argmin(np.sum(np.square(diff), axis=1))
+            self.t_point = self.target_point[self.t_point_index]
+
+
+        # 畫 Search Window 範圍（右鍵拖曳時）
+        elif flags == 2 & cv2.EVENT_FLAG_RBUTTON:
+            self.mouse_drag = True
+
+            # 複製框圖模板
+            temp_img = np.copy(self.img_label[self.current_page])
+
+            # 計算 Search Winodw, Calculate Range
+            s1, s2, c1, c2 = tool.get_search_window(self.t_point, (x, y), self.temp_size)
+
+
+            cv2.rectangle(temp_img, s1, s2, (255, 0, 0), thickness=1)
+            cv2.rectangle(temp_img, c1, c2, (255, 255, 0), thickness=1)
+
+            # 更新圖片
+            cv2.imshow(self.window_name, temp_img)
+
+
+        # 確定 Search Window 範圍（右鍵放開時）
+        elif event == cv2.EVENT_RBUTTONUP:
+            if self.mouse_drag:
+                self.mouse_drag = False  # 拖曳重置
+
+                tx, ty = self.t_point
+
+                # 計算 Search Winodw, Calculate Range
+                s1, s2, c1, c2 = tool.get_search_window((tx, ty), (x, y), self.temp_size)
+
+                # 紀錄範圍
+                self.roi_point[self.t_point_index] = [s1, s2]
+                self.roi_shift[self.t_point_index] = (abs(x-tx), abs(y-ty))
+
+                # 畫圖
+                cv2.rectangle(self.img_label[self.current_page], s1, s2, (0, 0, 255), thickness=1)
+                cv2.rectangle(self.img_label[self.current_page], c1, c2, (255, 255, 0), thickness=1)
+
+
+                # 更新圖片
+                cv2.imshow(self.window_name, self.img_label[self.current_page])
+
+
 
 
     def main(self):
-
         while True:
             cv2.setMouseCallback(self.window_name, self.click_event)  # 設定滑鼠回饋事件
 

@@ -211,6 +211,8 @@ class Ui_MainWindow(object):
         font.setFamily("Calibri")
         font.setPointSize(10)
         self.btn_run.setFont(font)
+        self.btn_run.setAutoRepeatDelay(3000)
+        self.btn_run.setAutoRepeatInterval(3000)
         self.btn_run.setObjectName("btn_run")
         self.label_manufacturer = QtWidgets.QLabel(self.groupBox_preview)
         self.label_manufacturer.setGeometry(QtCore.QRect(10, 340, 71, 21))

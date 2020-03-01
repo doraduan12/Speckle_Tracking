@@ -7,6 +7,7 @@ import os
 import datetime
 
 from PyQt5 import QtCore, QtGui, QtWidgets
+from PyQt5.QtCore import pyqtSlot
 from PyQt5.QtWidgets import QFileDialog, QMainWindow
 from main_window import Ui_MainWindow
 
@@ -27,15 +28,15 @@ class My_MainWindow(QMainWindow, Ui_MainWindow):
 
     def setup(self):
         # 按下 選路徑(btn_path) 按鈕
-        self.btn_browse.pressed.connect(self.pressed_btn_path)
+        self.btn_browse.clicked.connect(self.clicked_btn_path)
 
-        self.btn_run.pressed.connect(self.pressed_btn_run)
-
+        self.btn_run.clicked.connect(self.clicked_btn_run)
 
 
 
     # 按下 選路徑(btn_path) 按鈕的動作
-    def pressed_btn_path(self):
+    @pyqtSlot()
+    def clicked_btn_path(self):
         # files, filetype = QFileDialog.getOpenFileNames(self, "選取資料夾").replace('/', '\\')     # 開啟選取檔案的視窗
         files, filetype = QFileDialog.getOpenFileNames(self,  "選擇文件", './', # 起始路径
                                                        "All Files (*);;Dicom Files (*.dcm);;Png Files (*.png);;JPEG Files (*.jpeg)")
@@ -133,11 +134,11 @@ class My_MainWindow(QMainWindow, Ui_MainWindow):
             # TODO 輸入格式錯的視窗
             pass
 
-
-
-    def pressed_btn_run(self):
+    @pyqtSlot()
+    def clicked_btn_run(self):
         # TODO 按下 run
 
+        cv2.destroyAllWindows()
 
         kwargs = {
             'imgs': self.IMGS,
@@ -150,7 +151,6 @@ class My_MainWindow(QMainWindow, Ui_MainWindow):
 
         cv2_gui = Cv2Gui(**kwargs)
         cv2_gui.main()
-
 
 
 

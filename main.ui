@@ -575,6 +575,12 @@
      <property name="text">
       <string>Run</string>
      </property>
+     <property name="autoRepeatDelay">
+      <number>-1</number>
+     </property>
+     <property name="autoRepeatInterval">
+      <number>-1</number>
+     </property>
     </widget>
     <widget class="QLabel" name="label_manufacturer">
      <property name="geometry">
