@@ -35,16 +35,10 @@ class Tools():
     # 影像切換
     def photo_switch(self, switch:str, page:int, max:int) -> int:
         if switch == 'last':
-            if page == 0:
-                page = 0
-            else:
-                page -= 1
+            page = 0 if page == 0 else page - 1
 
         elif switch == 'next':
-            if page == max - 1:
-                page = max - 1
-            else:
-                page += 1
+            page = max - 1 if max == max - 1 else page + 1
 
         return page
 
@@ -75,7 +69,7 @@ class Tools():
         return p1, p2
 
     # 輸入中心點、右下角點，回傳校正後的左上、右下點
-    def get_search_window(self, center: tuple, corner: tuple) -> (tuple, tuple):
+    def get_search_window(self, center: tuple, corner: tuple, template: int) -> (tuple, tuple, tuple, tuple):
         '''
         算出 searchwindow 範圍
         :param center:
@@ -86,6 +80,9 @@ class Tools():
         startPoint = tuple(2 * np.asarray(center) - np.asarray(corner))
         s1, s2 = self.point_converter(startPoint, corner)
 
-        return s1, s2
+        c1 = (s1[0] - template//2, s1[1] - template//2)
+        c2 = (s2[0] + template//2, s2[1] + template//2)
+
+        return s1, s2, c1, c2
 
 

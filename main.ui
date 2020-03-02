@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>698</width>
+    <width>723</width>
     <height>693</height>
    </rect>
   </property>
@@ -56,8 +56,8 @@
      <rect>
       <x>460</x>
       <y>50</y>
-      <width>221</width>
-      <height>311</height>
+      <width>231</width>
+      <height>381</height>
      </rect>
     </property>
     <property name="font">
@@ -126,36 +126,6 @@
       <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
      </property>
     </widget>
-    <widget class="QTextBrowser" name="textBrowser_delta_x">
-     <property name="geometry">
-      <rect>
-       <x>120</x>
-       <y>230</y>
-       <width>51</width>
-       <height>21</height>
-      </rect>
-     </property>
-     <property name="font">
-      <font>
-       <pointsize>8</pointsize>
-      </font>
-     </property>
-     <property name="styleSheet">
-      <string notr="true">background-color: rgba(255, 255, 255, 0);</string>
-     </property>
-     <property name="inputMethodHints">
-      <set>Qt::ImhMultiLine</set>
-     </property>
-     <property name="verticalScrollBarPolicy">
-      <enum>Qt::ScrollBarAlwaysOff</enum>
-     </property>
-     <property name="horizontalScrollBarPolicy">
-      <enum>Qt::ScrollBarAlwaysOff</enum>
-     </property>
-     <property name="readOnly">
-      <bool>false</bool>
-     </property>
-    </widget>
     <widget class="QLabel" name="label_delta_x">
      <property name="geometry">
       <rect>
@@ -173,36 +143,6 @@
      </property>
      <property name="alignment">
       <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-     </property>
-    </widget>
-    <widget class="QTextBrowser" name="textBrowser_delta_y">
-     <property name="geometry">
-      <rect>
-       <x>120</x>
-       <y>270</y>
-       <width>51</width>
-       <height>21</height>
-      </rect>
-     </property>
-     <property name="font">
-      <font>
-       <pointsize>8</pointsize>
-      </font>
-     </property>
-     <property name="styleSheet">
-      <string notr="true">background-color: rgba(255, 255, 255, 0);</string>
-     </property>
-     <property name="inputMethodHints">
-      <set>Qt::ImhMultiLine</set>
-     </property>
-     <property name="verticalScrollBarPolicy">
-      <enum>Qt::ScrollBarAlwaysOff</enum>
-     </property>
-     <property name="horizontalScrollBarPolicy">
-      <enum>Qt::ScrollBarAlwaysOff</enum>
-     </property>
-     <property name="readOnly">
-      <bool>false</bool>
      </property>
     </widget>
     <widget class="QLabel" name="label_delta_y">
@@ -410,7 +350,7 @@
     <widget class="QLabel" name="label_mm1">
      <property name="geometry">
       <rect>
-       <x>180</x>
+       <x>190</x>
        <y>230</y>
        <width>31</width>
        <height>21</height>
@@ -434,7 +374,7 @@
     <widget class="QLabel" name="label_mm2">
      <property name="geometry">
       <rect>
-       <x>180</x>
+       <x>190</x>
        <y>270</y>
        <width>31</width>
        <height>21</height>
@@ -455,14 +395,208 @@
       <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
      </property>
     </widget>
+    <widget class="QLabel" name="label_search_window">
+     <property name="geometry">
+      <rect>
+       <x>0</x>
+       <y>350</y>
+       <width>111</width>
+       <height>21</height>
+      </rect>
+     </property>
+     <property name="font">
+      <font>
+       <pointsize>9</pointsize>
+      </font>
+     </property>
+     <property name="text">
+      <string>Search Window :</string>
+     </property>
+     <property name="textFormat">
+      <enum>Qt::AutoText</enum>
+     </property>
+     <property name="alignment">
+      <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+     </property>
+    </widget>
+    <widget class="QLabel" name="label_template_block">
+     <property name="geometry">
+      <rect>
+       <x>10</x>
+       <y>310</y>
+       <width>101</width>
+       <height>21</height>
+      </rect>
+     </property>
+     <property name="font">
+      <font>
+       <pointsize>9</pointsize>
+      </font>
+     </property>
+     <property name="text">
+      <string>Template Block :</string>
+     </property>
+     <property name="textFormat">
+      <enum>Qt::AutoText</enum>
+     </property>
+     <property name="alignment">
+      <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+     </property>
+    </widget>
+    <widget class="QLabel" name="label_pixel1">
+     <property name="geometry">
+      <rect>
+       <x>190</x>
+       <y>310</y>
+       <width>41</width>
+       <height>21</height>
+      </rect>
+     </property>
+     <property name="font">
+      <font>
+       <pointsize>8</pointsize>
+      </font>
+     </property>
+     <property name="text">
+      <string>pixels</string>
+     </property>
+     <property name="textFormat">
+      <enum>Qt::AutoText</enum>
+     </property>
+     <property name="alignment">
+      <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+     </property>
+    </widget>
+    <widget class="QLabel" name="label_pixel2">
+     <property name="geometry">
+      <rect>
+       <x>190</x>
+       <y>350</y>
+       <width>41</width>
+       <height>21</height>
+      </rect>
+     </property>
+     <property name="font">
+      <font>
+       <pointsize>8</pointsize>
+      </font>
+     </property>
+     <property name="text">
+      <string>pixels</string>
+     </property>
+     <property name="textFormat">
+      <enum>Qt::AutoText</enum>
+     </property>
+     <property name="alignment">
+      <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+     </property>
+    </widget>
+    <widget class="QSpinBox" name="spinBox_temp_size">
+     <property name="geometry">
+      <rect>
+       <x>120</x>
+       <y>310</y>
+       <width>61</width>
+       <height>22</height>
+      </rect>
+     </property>
+     <property name="font">
+      <font>
+       <family>Calibri</family>
+       <pointsize>10</pointsize>
+      </font>
+     </property>
+    </widget>
+    <widget class="QSpinBox" name="spinBox_search_range">
+     <property name="geometry">
+      <rect>
+       <x>120</x>
+       <y>350</y>
+       <width>61</width>
+       <height>22</height>
+      </rect>
+     </property>
+     <property name="font">
+      <font>
+       <family>Calibri</family>
+       <pointsize>10</pointsize>
+      </font>
+     </property>
+    </widget>
+    <widget class="QDoubleSpinBox" name="doubleSpinBox_delta_x">
+     <property name="geometry">
+      <rect>
+       <x>120</x>
+       <y>230</y>
+       <width>61</width>
+       <height>22</height>
+      </rect>
+     </property>
+     <property name="font">
+      <font>
+       <family>Calibri</family>
+       <pointsize>9</pointsize>
+      </font>
+     </property>
+     <property name="decimals">
+      <number>3</number>
+     </property>
+     <property name="singleStep">
+      <double>0.050000000000000</double>
+     </property>
+    </widget>
+    <widget class="QDoubleSpinBox" name="doubleSpinBox_delta_y">
+     <property name="geometry">
+      <rect>
+       <x>120</x>
+       <y>270</y>
+       <width>61</width>
+       <height>22</height>
+      </rect>
+     </property>
+     <property name="font">
+      <font>
+       <family>Calibri</family>
+       <pointsize>9</pointsize>
+      </font>
+     </property>
+     <property name="decimals">
+      <number>3</number>
+     </property>
+     <property name="singleStep">
+      <double>0.050000000000000</double>
+     </property>
+    </widget>
+    <zorder>label_image_size</zorder>
+    <zorder>label_date</zorder>
+    <zorder>label_frame</zorder>
+    <zorder>label_delta_x</zorder>
+    <zorder>label_delta_y</zorder>
+    <zorder>label_time</zorder>
+    <zorder>label_image_size_show</zorder>
+    <zorder>label_date_show</zorder>
+    <zorder>label_time_show</zorder>
+    <zorder>label_frame_show</zorder>
+    <zorder>label_filetype_show</zorder>
+    <zorder>label_filetype</zorder>
+    <zorder>label_mm1</zorder>
+    <zorder>label_mm2</zorder>
+    <zorder>label_template_block</zorder>
+    <zorder>label_search_window</zorder>
+    <zorder>label_pixel1</zorder>
+    <zorder>label_pixel2</zorder>
+    <zorder>spinBox_temp_size</zorder>
+    <zorder>spinBox_search_range</zorder>
+    <zorder>doubleSpinBox_delta_x</zorder>
+    <zorder>doubleSpinBox_delta_y</zorder>
    </widget>
-   <widget class="QGroupBox" name="groupBox_2">
+   <widget class="QGroupBox" name="groupBox_curve">
     <property name="geometry">
      <rect>
       <x>10</x>
-      <y>430</y>
+      <y>440</y>
       <width>431</width>
-      <height>231</height>
+      <height>211</height>
      </rect>
     </property>
     <property name="font">
@@ -472,15 +606,15 @@
      </font>
     </property>
     <property name="title">
-     <string>GroupBox</string>
+     <string>Curve</string>
     </property>
    </widget>
    <widget class="QPushButton" name="btn_save">
     <property name="geometry">
      <rect>
-      <x>450</x>
-      <y>630</y>
-      <width>131</width>
+      <x>460</x>
+      <y>610</y>
+      <width>111</width>
       <height>31</height>
      </rect>
     </property>
@@ -494,31 +628,13 @@
      <string>Save Result</string>
     </property>
    </widget>
-   <widget class="QTextBrowser" name="textBrowser_save">
-    <property name="geometry">
-     <rect>
-      <x>450</x>
-      <y>590</y>
-      <width>131</width>
-      <height>31</height>
-     </rect>
-    </property>
-    <property name="font">
-     <font>
-      <family>Calibri</family>
-     </font>
-    </property>
-    <property name="styleSheet">
-     <string notr="true">background-color: rgba(255, 255, 255, 0);</string>
-    </property>
-   </widget>
    <widget class="QGroupBox" name="groupBox_preview">
     <property name="geometry">
      <rect>
       <x>10</x>
       <y>50</y>
       <width>431</width>
-      <height>371</height>
+      <height>381</height>
      </rect>
     </property>
     <property name="font">
@@ -536,7 +652,7 @@
        <x>10</x>
        <y>30</y>
        <width>411</width>
-       <height>291</height>
+       <height>301</height>
       </rect>
      </property>
      <property name="font">
@@ -559,7 +675,7 @@
      <property name="geometry">
       <rect>
        <x>320</x>
-       <y>330</y>
+       <y>340</y>
        <width>101</width>
        <height>31</height>
       </rect>
@@ -573,20 +689,26 @@
      <property name="text">
       <string>Run</string>
      </property>
+     <property name="autoRepeatDelay">
+      <number>-1</number>
+     </property>
+     <property name="autoRepeatInterval">
+      <number>-1</number>
+     </property>
     </widget>
     <widget class="QLabel" name="label_manufacturer">
      <property name="geometry">
       <rect>
        <x>10</x>
-       <y>340</y>
-       <width>71</width>
+       <y>350</y>
+       <width>81</width>
        <height>21</height>
       </rect>
      </property>
      <property name="font">
       <font>
        <family>Calibri</family>
-       <pointsize>8</pointsize>
+       <pointsize>9</pointsize>
       </font>
      </property>
      <property name="text">
@@ -601,7 +723,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>698</width>
+     <width>723</width>
      <height>25</height>
     </rect>
    </property>
