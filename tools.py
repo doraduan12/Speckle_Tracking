@@ -35,16 +35,10 @@ class Tools():
     # 影像切換
     def photo_switch(self, switch:str, page:int, max:int) -> int:
         if switch == 'last':
-            if page == 0:
-                page = 0
-            else:
-                page -= 1
+            page = 0 if page == 0 else page - 1
 
         elif switch == 'next':
-            if page == max - 1:
-                page = max - 1
-            else:
-                page += 1
+            page = max - 1 if max == max - 1 else page + 1
 
         return page
 
