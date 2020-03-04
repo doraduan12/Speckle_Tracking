@@ -19,6 +19,11 @@ import cgitb
 cgitb.enable( format = 'text')
 
 
+# TODO 新增 target point 顯示視窗
+# TODO 新增 拖曳模式
+
+# TODO 新贓錨點??
+
 class My_MainWindow(QMainWindow, Ui_MainWindow):
     def __init__(self):
         super().__init__()
@@ -29,6 +34,9 @@ class My_MainWindow(QMainWindow, Ui_MainWindow):
 
 
     def setup(self):
+
+        self.filename = ''
+
         # 按下 選路徑(btn_path) 按鈕
         self.btn_browse.clicked.connect(self.clicked_btn_path)
 
@@ -38,9 +46,7 @@ class My_MainWindow(QMainWindow, Ui_MainWindow):
         self.spinBox_temp_size.valueChanged.connect(lambda x: self.show_preview_img(np.copy(self.img_preview), x, self.spinBox_search_range.value()))
         self.spinBox_search_range.valueChanged.connect(lambda x: self.show_preview_img(np.copy(self.img_preview), self.spinBox_temp_size.value(), x))
 
-        # TODO 新增 target point 顯示視窗
 
-        # TODO 新增 拖曳模式
 
 
 
@@ -52,9 +58,11 @@ class My_MainWindow(QMainWindow, Ui_MainWindow):
                                                        "All Files (*);;Dicom Files (*.dcm);;Png Files (*.png);;JPEG Files (*.jpeg)")
 
         if len(files) > 0:
+            # 副檔名
+            extension = os.path.splitext(files[0])[-1].lower()
 
             # 如果讀取到 Dicom 檔
-            if os.path.splitext(files[0])[-1].lower() == '.dcm':
+            if extension == '.dcm':
                 file = files[0]
                 browse_path = file
                 self.filename = os.path.splitext(os.path.split(file)[-1])[0]
@@ -97,8 +105,7 @@ class My_MainWindow(QMainWindow, Ui_MainWindow):
                     deltax, deltay = 0, 0
 
             # 如果讀到圖檔
-            # TODO 改成抓圖片的附檔名
-            else:
+            elif extension == '.png' or extension =='.jpg' or extension == '.jpeg':
                 browse_path = os.path.split(files[0])[0]
                 self.filename = os.path.split(browse_path)[-1]
 
@@ -113,15 +120,24 @@ class My_MainWindow(QMainWindow, Ui_MainWindow):
 
                 filetype = '.' + files[0].split('.')[-1]
 
-                date = ''
-                time = ''
+                date, time, system_name = '', '', ''
 
-                system_name = ''
-
-                deltax = 0
-                deltay = 0
+                # TODO deltax, y = 0 的時候顯示 pixel 值
+                # TODO 或是讓使用者畫線，換算 dx, dy
+                deltax, deltay = 0, 0
 
 
+            # 如果讀入檔案不是 dicom 或是 圖檔
+            else:
+                msg = QtWidgets.QMessageBox()
+                msg.setWindowTitle('Warning')
+                msg.setText('Please select the dicom or the image file.\n')
+                msg.setIcon(QtWidgets.QMessageBox.Warning)
+
+                msg.exec_()
+                return
+
+            # 寫入 檔案路徑
             self.textBrowser_browse.setText(browse_path)
 
             # 顯示超音波廠商、根據字數調整 label size
@@ -152,14 +168,21 @@ class My_MainWindow(QMainWindow, Ui_MainWindow):
 
         # 如果沒有選擇檔案的話
         else:
-            # TODO 輸入格式錯的視窗
             pass
 
 
 
     @pyqtSlot()
     def clicked_btn_run(self):
-        # TODO 按下 run
+
+        if not self.filename:
+            msg = QtWidgets.QMessageBox()
+            msg.setWindowTitle('Warning')
+            msg.setText('Please select the dicom or the image file.\n')
+            msg.setIcon(QtWidgets.QMessageBox.Warning)
+
+            msg.exec_()
+            return
 
         cv2.destroyAllWindows()
 
@@ -177,7 +200,7 @@ class My_MainWindow(QMainWindow, Ui_MainWindow):
         while True:
             cv2.setMouseCallback(cv2_gui.window_name, cv2_gui.click_event)  # 設定滑鼠回饋事件
 
-            action = tool.find_ACTION(cv2.waitKey(1))  # 設定鍵盤回饋事件
+            action = tool.find_action(cv2.waitKey(1))  # 設定鍵盤回饋事件
 
             # 「esc」 跳出迴圈
             if action == 'esc':
@@ -189,11 +212,10 @@ class My_MainWindow(QMainWindow, Ui_MainWindow):
 
             # 「s」 執行 speckle tracking
             # if action == 'speckle':
-            #     t1 = time.time()
-            #     self.speckleTracking(record=True, show=True)
-            #     t2 = time.time()
-            #     print('Speckle Tracking costs {} seconds.\n'.format(t2 - t1))
-            #     plt.show()
+                # t1 = time.time()
+                # cv2_gui.speckleTracking(record=True, show=True)
+                # t2 = time.time()
+                # print('Speckle Tracking costs {} seconds.\n'.format(t2 - t1))
 
             # 「t」 增加預設點數（測試時用）
             # if action == 'test':
@@ -210,6 +232,7 @@ class My_MainWindow(QMainWindow, Ui_MainWindow):
                 print()
 
         cv2.destroyWindow(cv2_gui.window_name)  # （按 esc 跳出迴圈後）關閉視窗
+
 
 
     def show_preview_img(self, img, temp, search):

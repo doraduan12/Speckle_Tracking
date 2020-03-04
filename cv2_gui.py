@@ -30,7 +30,7 @@ class Cv2Gui():
 
         print("The shape of dicom is :", self.IMGS.shape)
 
-        self.IMGS = tool.addPage(self.IMGS)
+        self.IMGS = tool.add_page(self.IMGS)
         self.img_label = np.copy(self.IMGS)
         self.num_of_img, self.h, self.w, _ = self.IMGS.shape
 

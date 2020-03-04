@@ -17,7 +17,7 @@ class Tools():
 
 
     # 查詢按鍵指令
-    def find_ACTION(self, key: int) -> str:
+    def find_action(self, key: int) -> str:
         # if key != -1:print(key)
         try:
             return self.ACTION[key]
@@ -25,7 +25,7 @@ class Tools():
             return None
 
     # 將 Dcm 檔影像加上圖片編號
-    def addPage(self, imgs: np) -> np:
+    def add_page(self, imgs: np) -> np:
         for i in range(len(imgs)):
             s = str(i) + '/' + str(len(imgs) - 1)
             font = cv2.FONT_HERSHEY_SIMPLEX
