@@ -6,16 +6,17 @@ import matplotlib.pyplot as plt
 import time
 import os
 
-# from speckle_tracking import SpeckleTracking
+from speckle_tracking import SpeckleTracking
 from tools import Tools
 # from mouse_event import
 
 tool = Tools()
+speckle_tracking = SpeckleTracking()
 
 class Cv2Gui():
 
     def __init__(self, imgs:np, delta_x: float, delta_y: float, window_name: str,
-                 temp_size: int=32, default_search: int=10):
+                 temp_size: int=32, default_search: int=10, mode: str='sad'):
 
         self.IMGS = imgs
         self.window_name = window_name
@@ -31,6 +32,10 @@ class Cv2Gui():
         print("The shape of dicom is :", self.IMGS.shape)
 
         self.IMGS = tool.add_page(self.IMGS)
+        self.IMGS_GRAY = np.asarray([cv2.cvtColor(img, cv2.COLOR_BGR2GRAY) for img in self.IMGS])
+
+
+
         self.img_label = np.copy(self.IMGS)
         self.num_of_img, self.h, self.w, _ = self.IMGS.shape
 
@@ -198,6 +203,32 @@ class Cv2Gui():
                 # 更新圖片
                 cv2.imshow(self.window_name, self.img_label[self.current_page])
 
+
+    # 畫線的 Speckle Tracking
+    def speckle_tracking(self, show=False):
+        finish_already = True
+
+        for i, (tp, s_shift, done) in enumerate(zip(self.target_point, self.search_shift, self.track_done)):
+
+            # 如果該點完成，跳過該點
+            if done: continue
+
+            finish_already = False
+            self.track_done[i] = True
+            self.result_point[i] = [tp]
+
+            print('Now is tracking point{}.'.format(i + 1))
+
+            result = tp
+            d_list = []
+
+            # 從圖1開始抓出，當作 Candidate
+            for i in range(1, self.num_of_img):
+                # target, img1, img2, search_shift, temp_size
+                result = speckle_tracking.full(result, self.IMGS_GRAY[i-1], self.IMGS_GRAY[i], s_shift, self.temp_size)
+                # cv2.circle(self.img_label[i], result, 2, (0, 0, 255), thickness=-1)
+                # cv2.imshow(self.window_name, self.img_label[i])
+                # cv2.waitKey(1)
 
 
 if __name__ == '__main__':

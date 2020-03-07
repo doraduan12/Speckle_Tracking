@@ -5,6 +5,7 @@ import numpy as np
 import sys
 import os
 import datetime
+import time
 
 from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtCore import pyqtSlot
@@ -18,9 +19,9 @@ tool = Tools()
 import cgitb
 cgitb.enable( format = 'text')
 
-
+# TODO Cost 方法 選擇器
 # TODO 新增 target point 顯示視窗
-# TODO 新增 拖曳模式
+# TODO 新增 點模式／線條模式
 
 # TODO 新贓錨點??
 
@@ -192,7 +193,8 @@ class My_MainWindow(QMainWindow, Ui_MainWindow):
             'delta_x': float(self.doubleSpinBox_delta_x.value())/1000,
             'delta_y': float(self.doubleSpinBox_delta_y.value())/1000,
             'temp_size': int(self.spinBox_temp_size.value()),
-            'default_search': int(self.spinBox_search_range.value())
+            'default_search': int(self.spinBox_search_range.value()),
+            'mode': 'sad'
         }
 
         cv2_gui = Cv2Gui(**kwargs)
@@ -211,11 +213,11 @@ class My_MainWindow(QMainWindow, Ui_MainWindow):
                 cv2_gui.reset()
 
             # 「s」 執行 speckle tracking
-            # if action == 'speckle':
-                # t1 = time.time()
-                # cv2_gui.speckleTracking(record=True, show=True)
-                # t2 = time.time()
-                # print('Speckle Tracking costs {} seconds.\n'.format(t2 - t1))
+            if action == 'speckle':
+                t1 = time.time()
+                cv2_gui.speckle_tracking(show=False)
+                t2 = time.time()
+                print('Speckle Tracking costs {} seconds.\n'.format(t2 - t1))
 
             # 「t」 增加預設點數（測試時用）
             # if action == 'test':
@@ -227,7 +229,7 @@ class My_MainWindow(QMainWindow, Ui_MainWindow):
             if action == 'space':
                 print('self.target_point : ', cv2_gui.target_point)
                 print('self.track_done : ', cv2_gui.track_done)
-                print('self.search_point : ', cv2_gui.search_point)
+                print('self.search_point : ', cv2_gui.search_point) # 目前沒用
                 print('self.search_shift : ', cv2_gui.search_shift)
                 print()
 
