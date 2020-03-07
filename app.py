@@ -19,9 +19,12 @@ tool = Tools()
 import cgitb
 cgitb.enable( format = 'text')
 
+# TODO 開啟時 search window = 1 的問題
+
 # TODO Cost 方法 選擇器
 # TODO 新增 target point 顯示視窗
 # TODO 新增 點模式／線條模式
+# TODO 顏色轉換
 
 # TODO 新贓錨點??
 
@@ -38,14 +41,23 @@ class My_MainWindow(QMainWindow, Ui_MainWindow):
 
         self.filename = ''
 
+
         # 按下 選路徑(btn_path) 按鈕
         self.btn_browse.clicked.connect(self.clicked_btn_path)
-
-        self.btn_run.clicked.connect(self.clicked_btn_run)
 
         # 設定更新 spinbox 的動作
         self.spinBox_temp_size.valueChanged.connect(lambda x: self.show_preview_img(np.copy(self.img_preview), x, self.spinBox_search_range.value()))
         self.spinBox_search_range.valueChanged.connect(lambda x: self.show_preview_img(np.copy(self.img_preview), self.spinBox_temp_size.value(), x))
+
+        # 按下執行時的動作
+        self.btn_run.clicked.connect(self.clicked_btn_run)
+
+        # 按下 COLOR 轉換色彩
+        self.btn_color.clicked.connect(self.clicked_btn_color)
+
+        # 滑動 horizontal slide 的動作
+        self.horizontalSlider_preview.valueChanged.connect(self.slide_change)
+
 
 
 
@@ -75,13 +87,24 @@ class My_MainWindow(QMainWindow, Ui_MainWindow):
 
                 filetype = '.dcm'
 
-                # 讀取 dicom 的時間
+                date, time = '', ''
+
+                # 讀取 dicom 的日期
                 if 'InstanceCreationDate' in dir(dicom):
                     date = dicom.InstanceCreationDate
                     date = datetime.date(int(date[:4]), int(date[4:6]), int(date[6:]))
+                elif 'StudyDate' in dir(dicom):
+                    date = dicom.StudyDate
+                    date = datetime.date(int(date[:4]), int(date[4:6]), int(date[6:]))
+
+                # 讀取 dicom 的時間
                 if 'InstanceCreationTime' in dir(dicom):
                     time = dicom.InstanceCreationTime
                     time = datetime.time(int(time[:2]), int(time[2:4]), int(time[4:]))
+                elif 'StudyTime' in dir(dicom):
+                    time = dicom.StudyTime
+                    time = datetime.time(int(time[:2]), int(time[2:4]), int(time[4:]))
+
 
                 # 讀取 dicom 中 儀器廠商
                 if 'ManufacturerModelName' in dir(dicom) and 'Manufacturer' in dir(dicom):
@@ -141,8 +164,9 @@ class My_MainWindow(QMainWindow, Ui_MainWindow):
             # 寫入 檔案路徑
             self.textBrowser_browse.setText(browse_path)
 
-            # 顯示超音波廠商、根據字數調整 label size
+            # 顯示超音波廠商、字體白色、根據字數調整 label size
             self.label_manufacturer.setText(system_name)
+            self.label_manufacturer.setStyleSheet("color:white")
             self.label_manufacturer.adjustSize()
 
             # 寫入 file detail 內容
@@ -155,17 +179,23 @@ class My_MainWindow(QMainWindow, Ui_MainWindow):
             self.doubleSpinBox_delta_x.setValue(deltax // 0.000001 / 1000)
             self.doubleSpinBox_delta_y.setValue(deltay // 0.000001 / 1000)
 
+            # horizontalSlider_preview 設定最大值、歸零
+            self.horizontalSlider_preview.setMaximum(len(self.IMGS) - 1)
+            self.horizontalSlider_preview.setValue(0)
 
             # 預設的 template block 與 search window
-            default_template = 32
-            default_search = 10
-            self.spinBox_temp_size.setValue(default_template)
+            self.default_template = 32
+            self.default_search = 10
+            self.spinBox_temp_size.setValue(self.default_template)
             self.spinBox_temp_size.setRange(1, h//2)
-            self.spinBox_search_range.setValue(default_search)
+            self.spinBox_search_range.setValue(self.default_search)
             self.spinBox_search_range.setRange(1, h//2)
 
+
             # 建立預覽圖片、自適化調整
-            self.show_preview_img(np.copy(self.img_preview), default_template, default_search)
+            self.show_preview_img(np.copy(self.img_preview), self.default_template, self.default_search)
+
+
 
         # 如果沒有選擇檔案的話
         else:
@@ -237,9 +267,36 @@ class My_MainWindow(QMainWindow, Ui_MainWindow):
 
 
 
+    # TODO 待修正
+    @pyqtSlot()
+    def clicked_btn_color(self):
+        if not self.filename:
+            return
+
+        # 將圖片從 YBR 轉成 BGR 通道
+        self.IMGS = np.asarray([cv2.cvtColor(pydicom.pixel_data_handlers.util.convert_color_space(img, 'YBR_FULL', 'RGB'), cv2.COLOR_RGB2BGR) for img in self.IMGS])
+        self.img_preview = self.IMGS[0]
+
+        # 建立預覽圖片、自適化調整
+        self.show_preview_img(np.copy(self.img_preview), self.default_search, self.default_search)
+
+
+    def slide_change(self):
+        if not self.filename:
+            return
+
+        # 建立預覽圖片、自適化調整
+        self.img_preview = self.IMGS[self.horizontalSlider_preview.value()]
+        self.show_preview_img(np.copy(self.img_preview), self.default_template, self.default_search)
+
+
+
     def show_preview_img(self, img, temp, search):
         h, w, _ = img.shape
         x, y = w//2, h//2
+
+        # self.default_template = temp
+        # self.default_search = search
 
         t_shift = temp//2
         s_shift = search//2

@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>723</width>
-    <height>693</height>
+    <width>796</width>
+    <height>758</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -38,7 +38,7 @@
      <rect>
       <x>100</x>
       <y>10</y>
-      <width>581</width>
+      <width>691</width>
       <height>31</height>
      </rect>
     </property>
@@ -54,10 +54,10 @@
    <widget class="QGroupBox" name="groupBox_filedetail">
     <property name="geometry">
      <rect>
-      <x>460</x>
+      <x>560</x>
       <y>50</y>
       <width>231</width>
-      <height>381</height>
+      <height>391</height>
      </rect>
     </property>
     <property name="font">
@@ -594,8 +594,8 @@
     <property name="geometry">
      <rect>
       <x>10</x>
-      <y>440</y>
-      <width>431</width>
+      <y>500</y>
+      <width>531</width>
       <height>211</height>
      </rect>
     </property>
@@ -612,8 +612,8 @@
    <widget class="QPushButton" name="btn_save">
     <property name="geometry">
      <rect>
-      <x>460</x>
-      <y>610</y>
+      <x>560</x>
+      <y>680</y>
       <width>111</width>
       <height>31</height>
      </rect>
@@ -633,8 +633,8 @@
      <rect>
       <x>10</x>
       <y>50</y>
-      <width>431</width>
-      <height>381</height>
+      <width>531</width>
+      <height>441</height>
      </rect>
     </property>
     <property name="font">
@@ -651,8 +651,8 @@
       <rect>
        <x>10</x>
        <y>30</y>
-       <width>411</width>
-       <height>301</height>
+       <width>511</width>
+       <height>361</height>
       </rect>
      </property>
      <property name="font">
@@ -674,9 +674,9 @@
     <widget class="QPushButton" name="btn_run">
      <property name="geometry">
       <rect>
-       <x>320</x>
-       <y>340</y>
-       <width>101</width>
+       <x>450</x>
+       <y>400</y>
+       <width>71</width>
        <height>31</height>
       </rect>
      </property>
@@ -699,8 +699,8 @@
     <widget class="QLabel" name="label_manufacturer">
      <property name="geometry">
       <rect>
-       <x>10</x>
-       <y>350</y>
+       <x>20</x>
+       <y>360</y>
        <width>81</width>
        <height>21</height>
       </rect>
@@ -712,9 +712,52 @@
       </font>
      </property>
      <property name="text">
-      <string/>
+      <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;br/&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
      </property>
     </widget>
+    <widget class="QSlider" name="horizontalSlider_preview">
+     <property name="geometry">
+      <rect>
+       <x>10</x>
+       <y>405</y>
+       <width>351</width>
+       <height>21</height>
+      </rect>
+     </property>
+     <property name="orientation">
+      <enum>Qt::Horizontal</enum>
+     </property>
+    </widget>
+    <widget class="QPushButton" name="btn_color">
+     <property name="geometry">
+      <rect>
+       <x>370</x>
+       <y>400</y>
+       <width>71</width>
+       <height>31</height>
+      </rect>
+     </property>
+     <property name="font">
+      <font>
+       <family>Calibri</family>
+       <pointsize>10</pointsize>
+      </font>
+     </property>
+     <property name="text">
+      <string>Color</string>
+     </property>
+     <property name="autoRepeatDelay">
+      <number>-1</number>
+     </property>
+     <property name="autoRepeatInterval">
+      <number>-1</number>
+     </property>
+    </widget>
+    <zorder>label_preview</zorder>
+    <zorder>btn_run</zorder>
+    <zorder>horizontalSlider_preview</zorder>
+    <zorder>label_manufacturer</zorder>
+    <zorder>btn_color</zorder>
    </widget>
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
@@ -723,7 +766,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>723</width>
+     <width>796</width>
      <height>25</height>
     </rect>
    </property>
