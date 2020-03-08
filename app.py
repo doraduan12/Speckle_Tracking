@@ -1,6 +1,7 @@
 import pydicom
 import cv2
 import numpy as np
+import matplotlib.pyplot as plt
 
 import sys
 import os
@@ -147,7 +148,6 @@ class My_MainWindow(QMainWindow, Ui_MainWindow):
                 self.default_path = os.path.split(browse_path)[0]
                 self.default_filename = self.filename + '.mp4'
 
-
                 # 排序圖檔
                 files = np.asarray(files)
                 temp = np.asarray([int(file.split('.')[0].split('/')[-1]) for file in files])
@@ -167,7 +167,6 @@ class My_MainWindow(QMainWindow, Ui_MainWindow):
 
                 # 設定 fps
                 self.FPS = 20
-
 
 
             # 如果讀入檔案不是 dicom 或是 圖檔
@@ -284,11 +283,28 @@ class My_MainWindow(QMainWindow, Ui_MainWindow):
                 t2 = time.time()
                 print('Speckle Tracking costs {} seconds.\n'.format(t2 - t1))
 
+
+                # 開始繪圖
+                plt.figure()
+                for i in self.cv2_gui.result_distance.keys():
+
+                    d_list = np.asarray(self.cv2_gui.result_distance[i])
+                    strain = (d_list - d_list[0]) / d_list[0]
+
+                    # 抓出對應的顏色，並轉呈 matplotlib 的 RGB 0-1 格式
+                    color = tuple([self.cv2_gui.colors[i][-j]/255 for j in range(1, 4)])
+                    plt.plot([i for i in range(self.num_of_img)], gui_tool.lsq_spline_medain(strain), color=color)
+                    # plt.plot([i for i in range(self.num_of_img)], strain, color=color)
+
+                plt.show()
+
+
+
             # 「t」 增加預設點數（測試時用）
             if action == 'test':
                 print('add point')
                 self.cv2_gui.addPoint((224, 217), (243, 114))
-                # self.cv2_gui.addPoint((313, 122), (374, 292))
+                self.cv2_gui.addPoint((313, 122), (374, 292))
 
             # 按空白鍵查看點數狀況
             if action == 'space':

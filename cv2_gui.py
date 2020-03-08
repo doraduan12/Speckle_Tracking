@@ -34,8 +34,6 @@ class Cv2Gui():
         self.IMGS = cv2_tool.add_page(self.IMGS)
         self.IMGS_GRAY = np.asarray([cv2.cvtColor(img, cv2.COLOR_BGR2GRAY) for img in self.IMGS])
 
-
-
         self.img_label = np.copy(self.IMGS)
         self.num_of_img, self.h, self.w, _ = self.IMGS.shape
 
@@ -51,6 +49,7 @@ class Cv2Gui():
         self.search_point = []  # -> list -> tuple
         self.search_shift = []
         self.result_point = {}
+        self.result_distance = {}
 
         # 顯示
         cv2.namedWindow(self.window_name, cv2.WINDOW_AUTOSIZE)
@@ -68,11 +67,13 @@ class Cv2Gui():
         cv2.imshow(self.window_name, self.img_label[self.current_page])
 
         self.color_index = 0
+        self.current_color = self.colors[self.color_index % self.num_of_color]
         self.target_point = []
         self.track_done = []
         self.search_point = []
         self.search_shift = []
         self.result_point = {}
+        self.result_distance = {}
 
         print('Reseting complete.')
 
@@ -162,8 +163,12 @@ class Cv2Gui():
 
                 cv2.imshow(self.window_name, self.img_label[self.current_page])
 
-            self.color_index += 1
-            self.current_color = self.colors[self.color_index % self.num_of_color]
+                # 先將第一點的距離輸入結果
+                self.result_distance[self.color_index] = [d]
+
+                # 更新顏色
+                self.color_index += 1
+                self.current_color = self.colors[self.color_index % self.num_of_color]
 
 
         # 設定 Search Window（右鍵點擊時）
@@ -221,9 +226,9 @@ class Cv2Gui():
     # 測試時方便建立線段
     def addPoint(self, point1, point2):
         # 作圖
-        cv2.line(self.img_label[self.current_page], point1, point2, (0, 0, 255), thickness=1)
-        cv2.circle(self.img_label[self.current_page], point1, 2, (0, 0, 255), thickness=-1)
-        cv2.circle(self.img_label[self.current_page], point2, 2, (0, 0, 255), thickness=-1)
+        cv2.line(self.img_label[self.current_page], point1, point2, self.current_color, thickness=1)
+        cv2.circle(self.img_label[self.current_page], point1, 2, self.current_color, thickness=-1)
+        cv2.circle(self.img_label[self.current_page], point2, 2, self.current_color, thickness=-1)
 
         # 計算距離 -> 尚未加入 List TODO
         text_point, d = cv2_tool.count_distance(point1, point2, self.delta)
@@ -245,6 +250,11 @@ class Cv2Gui():
 
         cv2.imshow(self.window_name, self.img_label[self.current_page])
 
+        # 先將第一點的距離輸入結果
+        self.result_distance[self.color_index] = [d]
+
+        self.color_index += 1
+        self.current_color = self.colors[self.color_index]
 
 
     # 畫線的 Speckle Tracking
@@ -258,12 +268,13 @@ class Cv2Gui():
             finish_already = False
             self.track_done[j] = True
             self.result_point[j] = [tp]
+
+
             color = self.colors[(j//2) % self.num_of_color]
 
             print('Now is tracking point{}.'.format(j + 1))
 
             result = tp
-            d_list = []
 
             # 從圖1開始抓出，當作 Candidate
             for i in range(1, self.num_of_img):
@@ -282,8 +293,7 @@ class Cv2Gui():
                     cv2.line(self.img_label[i], p_last, result, color, thickness=1)
                     text_point, d = cv2_tool.count_distance(p_last, result, self.delta)
                     cv2.putText(self.img_label[i], '{:4.3f}'.format(d), text_point, cv2.FONT_HERSHEY_SIMPLEX, .5, (255, 255, 255), 1)
-                    d_list.append(d)
-
+                    self.result_distance[j//2].append(d)
 
                 if show:
                     cv2.imshow(self.window_name, self.img_label[i])
@@ -295,15 +305,5 @@ class Cv2Gui():
 
 if __name__ == '__main__':
     pass
-
-
-
-
-
-
-
-
-
-
 
 

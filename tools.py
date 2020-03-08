@@ -1,8 +1,7 @@
 import numpy as np
 import cv2
 
-from scipy.interpolate import make_lsq_spline, BSpline
-from scipy.interpolate import interp1d
+from scipy.interpolate import make_lsq_spline
 import matplotlib.pyplot as plt
 from matplotlib import animation
 
@@ -32,6 +31,37 @@ class GuiTools():
         bytesPerLine = 3 * width
         QImg = QtGui.QImage(img.data, width, height, bytesPerLine, QtGui.QImage.Format_RGB888)
         return QImg
+
+    def lsq_spline_medain(self, y: list, k: int = 3) -> list:
+        '''
+        只取中間開始變化處的 lsq spline
+        :param y: 原始資料
+        :param k: 近似為 P(k) 多項式， k = 3 即為 cube spline
+        :return: 近似資料
+        '''
+        x = np.asarray([i for i in range(len(y))])
+        y = np.asarray(y)
+        max = np.max(y)
+        min = np.min(y)
+        stage = (max-min)/10
+
+        start = np.where(np.abs(y-y[0]) > stage)[0][0]
+        end = np.where(np.abs(y-y[-1]) > stage)[0][-1]
+
+        start_split = y[:start]
+        end_split = y[end+1:]
+        median_split = y[start:end+1]
+
+        l = len(median_split)
+        x_split = np.asarray([i for i in range(l)])
+        t = np.linspace(0, l, num=5, dtype='int').reshape(-1)
+        t = np.r_[(0,) * (k + 1), t[1:-1], (l - 1,) * (k + 1)]
+
+        spl = make_lsq_spline(x_split, median_split, t, k)
+
+        output = np.hstack((start_split, spl(x_split), end_split))
+
+        return output
 
 
 
