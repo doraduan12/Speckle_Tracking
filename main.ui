@@ -609,12 +609,12 @@
      <string>Curve</string>
     </property>
    </widget>
-   <widget class="QPushButton" name="btn_save">
+   <widget class="QPushButton" name="btn_save_result">
     <property name="geometry">
      <rect>
       <x>560</x>
       <y>680</y>
-      <width>111</width>
+      <width>101</width>
       <height>31</height>
      </rect>
     </property>

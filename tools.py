@@ -6,15 +6,16 @@ from scipy.interpolate import interp1d
 import matplotlib.pyplot as plt
 from matplotlib import animation
 
+from PyQt5 import QtCore, QtGui, QtWidgets
+from PyQt5.QtCore import pyqtSlot
+from PyQt5.QtWidgets import QFileDialog, QMainWindow
 
-class Tools():
 
-
+class GuiTools():
     ACTION = {27: 'esc', 67: 'clear', 99: 'clear', 82: 'reset', 114: 'reset',
               26: 'last atcion', 66: 'back', 98: 'back', 84: 'test', 116: 'test',
               76: 'line', 108: 'line', 83: 'speckle', 115: 'speckle',
               32: 'space', 77: 'median filter', 109: 'median filter'}
-
 
     # 查詢按鍵指令
     def find_action(self, key: int) -> str:
@@ -23,6 +24,19 @@ class Tools():
             return self.ACTION[key]
         except:
             return None
+
+    # 將cv2轉為 QImg
+    def convert2qtimg(self, img):
+        img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+        height, width, bytesPerComponent = img.shape
+        bytesPerLine = 3 * width
+        QImg = QtGui.QImage(img.data, width, height, bytesPerLine, QtGui.QImage.Format_RGB888)
+        return QImg
+
+
+
+
+class Cv2Tools():
 
     # 將 Dcm 檔影像加上圖片編號
     def add_page(self, imgs: np) -> np:
@@ -84,5 +98,7 @@ class Tools():
         c2 = (s2[0] + template//2, s2[1] + template//2)
 
         return s1, s2, c1, c2
+
+
 
 

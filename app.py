@@ -9,12 +9,12 @@ import time
 
 from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtCore import pyqtSlot
-from PyQt5.QtWidgets import QFileDialog, QMainWindow
+from PyQt5.QtWidgets import QFileDialog, QMainWindow, QMessageBox
 from main_window import Ui_MainWindow
 
 from cv2_gui import Cv2Gui
-from tools import Tools
-tool = Tools()
+from tools import GuiTools
+gui_tool = GuiTools()
 
 import cgitb
 cgitb.enable( format = 'text')
@@ -39,15 +39,16 @@ class My_MainWindow(QMainWindow, Ui_MainWindow):
 
     def setup(self):
 
+        # 初始化防止特定錯誤
         self.filename = ''
-
+        self.cv2_gui = ''
 
         # 按下 選路徑(btn_path) 按鈕
         self.btn_browse.clicked.connect(self.clicked_btn_path)
 
         # 設定更新 spinbox 的動作
-        self.spinBox_temp_size.valueChanged.connect(lambda x: self.show_preview_img(np.copy(self.img_preview), x, self.spinBox_search_range.value()))
-        self.spinBox_search_range.valueChanged.connect(lambda x: self.show_preview_img(np.copy(self.img_preview), self.spinBox_temp_size.value(), x))
+        self.spinBox_temp_size.valueChanged.connect(self.spinBox_temp_changed)
+        self.spinBox_search_range.valueChanged.connect(self.spinBox_search_changed)
 
         # 按下執行時的動作
         self.btn_run.clicked.connect(self.clicked_btn_run)
@@ -55,11 +56,11 @@ class My_MainWindow(QMainWindow, Ui_MainWindow):
         # 按下 COLOR 轉換色彩
         self.btn_color.clicked.connect(self.clicked_btn_color)
 
+        # 按下儲存解果
+        self.btn_save_result.clicked.connect(self.clicked_btn_save_result)
+
         # 滑動 horizontal slide 的動作
         self.horizontalSlider_preview.valueChanged.connect(self.slide_change)
-
-
-
 
 
 
@@ -78,12 +79,14 @@ class My_MainWindow(QMainWindow, Ui_MainWindow):
             if extension == '.dcm':
                 file = files[0]
                 browse_path = file
+                self.default_path, self.default_filename = os.path.split(browse_path)
+                self.default_filename = self.default_filename.split('.')[0] + '.mp4'
                 self.filename = os.path.splitext(os.path.split(file)[-1])[0]
 
                 dicom = pydicom.read_file(file)
                 self.IMGS = dicom.pixel_array
                 self.img_preview = self.IMGS[0]
-                num_of_img, h, w = self.IMGS.shape[:3]
+                self.num_of_img, self.h, self.w = self.IMGS.shape[:3]
 
                 filetype = '.dcm'
 
@@ -128,10 +131,24 @@ class My_MainWindow(QMainWindow, Ui_MainWindow):
                 else:
                     deltax, deltay = 0, 0
 
+
+                # 讀取 dicom 的 fps
+                if 'RecommendedDisplayFrameRate' in dir(dicom):
+                    self.FPS = dicom.RecommendedDisplayFrameRate
+                else:
+                    self.FPS = 20
+
+
+
             # 如果讀到圖檔
             elif extension == '.png' or extension =='.jpg' or extension == '.jpeg':
                 browse_path = os.path.split(files[0])[0]
                 self.filename = os.path.split(browse_path)[-1]
+
+                # 輸出影向預設的路徑與檔案名稱
+                self.default_path = os.path.split(browse_path)[0]
+                self.default_filename = self.filename + '.mp4'
+
 
                 # 排序圖檔
                 files = np.asarray(files)
@@ -140,7 +157,7 @@ class My_MainWindow(QMainWindow, Ui_MainWindow):
                 files = files[temp]
                 self.IMGS = np.asarray([cv2.imread(file) for file in files])
                 self.img_preview = self.IMGS[0]
-                num_of_img, h, w = self.IMGS.shape[:3]
+                self.num_of_img, self.h, self.w = self.IMGS.shape[:3]
 
                 filetype = '.' + files[0].split('.')[-1]
 
@@ -149,6 +166,10 @@ class My_MainWindow(QMainWindow, Ui_MainWindow):
                 # TODO deltax, y = 0 的時候顯示 pixel 值
                 # TODO 或是讓使用者畫線，換算 dx, dy
                 deltax, deltay = 0, 0
+
+                # 設定 fps
+                self.FPS = 20
+
 
 
             # 如果讀入檔案不是 dicom 或是 圖檔
@@ -161,6 +182,7 @@ class My_MainWindow(QMainWindow, Ui_MainWindow):
                 msg.exec_()
                 return
 
+
             # 寫入 檔案路徑
             self.textBrowser_browse.setText(browse_path)
 
@@ -171,10 +193,10 @@ class My_MainWindow(QMainWindow, Ui_MainWindow):
 
             # 寫入 file detail 內容
             self.label_filetype_show.setText(filetype)
-            self.label_image_size_show.setText(str(w) + ' x ' + str(h))
+            self.label_image_size_show.setText(str(self.w) + ' x ' + str(self.h))
             self.label_date_show.setText(str(date))
             self.label_time_show.setText(str(time))
-            self.label_frame_show.setText(str(num_of_img))
+            self.label_frame_show.setText(str(self.num_of_img))
 
             self.doubleSpinBox_delta_x.setValue(deltax // 0.000001 / 1000)
             self.doubleSpinBox_delta_y.setValue(deltay // 0.000001 / 1000)
@@ -187,9 +209,9 @@ class My_MainWindow(QMainWindow, Ui_MainWindow):
             self.default_template = 32
             self.default_search = 10
             self.spinBox_temp_size.setValue(self.default_template)
-            self.spinBox_temp_size.setRange(1, h//2)
+            self.spinBox_temp_size.setRange(1, self.h//2)
             self.spinBox_search_range.setValue(self.default_search)
-            self.spinBox_search_range.setRange(1, h//2)
+            self.spinBox_search_range.setRange(1, self.h//2)
 
 
             # 建立預覽圖片、自適化調整
@@ -227,12 +249,12 @@ class My_MainWindow(QMainWindow, Ui_MainWindow):
             'mode': 'sad'
         }
 
-        cv2_gui = Cv2Gui(**kwargs)
+        self.cv2_gui = Cv2Gui(**kwargs)
 
         while True:
-            cv2.setMouseCallback(cv2_gui.window_name, cv2_gui.click_event)  # 設定滑鼠回饋事件
+            cv2.setMouseCallback(self.cv2_gui.window_name, self.cv2_gui.click_event)  # 設定滑鼠回饋事件
 
-            action = tool.find_action(cv2.waitKey(1))  # 設定鍵盤回饋事件
+            action = gui_tool.find_action(cv2.waitKey(1))  # 設定鍵盤回饋事件
 
             # 「esc」 跳出迴圈
             if action == 'esc':
@@ -240,30 +262,30 @@ class My_MainWindow(QMainWindow, Ui_MainWindow):
 
             # 「r」 重置
             if action == 'reset':
-                cv2_gui.reset()
+                self.cv2_gui.reset()
 
             # 「s」 執行 speckle tracking
             if action == 'speckle':
                 t1 = time.time()
-                cv2_gui.speckle_tracking(show=False)
+                self.cv2_gui.speckle_tracking(show=False)
                 t2 = time.time()
                 print('Speckle Tracking costs {} seconds.\n'.format(t2 - t1))
 
             # 「t」 增加預設點數（測試時用）
-            # if action == 'test':
-            #     print('add point')
-            #     # dcm.addPoint((224, 217), (243, 114))
-            #     dcm.addPoint((313, 122), (374, 292))
+            if action == 'test':
+                print('add point')
+                self.cv2_gui.addPoint((224, 217), (243, 114))
+                # self.cv2_gui.addPoint((313, 122), (374, 292))
 
             # 按空白鍵查看點數狀況
             if action == 'space':
-                print('self.target_point : ', cv2_gui.target_point)
-                print('self.track_done : ', cv2_gui.track_done)
-                print('self.search_point : ', cv2_gui.search_point) # 目前沒用
-                print('self.search_shift : ', cv2_gui.search_shift)
+                print('self.target_point : ', self.cv2_gui.target_point)
+                print('self.track_done : ', self.cv2_gui.track_done)
+                print('self.search_point : ', self.cv2_gui.search_point) # 目前沒用
+                print('self.search_shift : ', self.cv2_gui.search_shift)
                 print()
 
-        cv2.destroyWindow(cv2_gui.window_name)  # （按 esc 跳出迴圈後）關閉視窗
+        cv2.destroyWindow(self.cv2_gui.window_name)  # （按 esc 跳出迴圈後）關閉視窗
 
 
 
@@ -281,6 +303,51 @@ class My_MainWindow(QMainWindow, Ui_MainWindow):
         self.show_preview_img(np.copy(self.img_preview), self.default_search, self.default_search)
 
 
+    # 存檔的按鈕
+    def clicked_btn_save_result(self):
+
+        # 如果尚未選擇影像，或是尚未運行 cv2，不運行按鈕
+        if not self.filename or not self.cv2_gui:
+            return
+
+        path, filetype = QFileDialog.getSaveFileName(self, "文件保存", self.default_path + '/' + self.default_filename, "All Files (*);;MP4 Files (*.mp4)")
+
+        # 如果沒有選擇存檔路徑，結束 function
+        if not path:
+            return
+
+        # 強制轉換副檔名為 mp4
+        filename = os.path.split(path)[-1]
+        if filename.split('.')[-1] != 'mp4':
+            path = path.split('.')[0] + '.mp4'
+
+        # 開始寫入 mp4
+        fourcc = cv2.VideoWriter_fourcc('m', 'p', '4', 'v')
+        videowriter = cv2.VideoWriter(path, fourcc, self.FPS, (self.w, self.h))
+
+        for img in self.cv2_gui.img_label:
+            videowriter.write(img)
+        videowriter.release()
+
+
+        # 通知視窗
+        msg = QMessageBox()
+        msg.setWindowTitle('Save completed.')
+        msg.setIcon(QMessageBox.Information)
+        msg.setText('Result saved finish.\n')
+
+        Open = msg.addButton('Show in explorer', QMessageBox.AcceptRole)
+        Ok = msg.addButton('OK', QMessageBox.DestructiveRole)
+        msg.setDefaultButton(Ok)
+        reply = msg.exec()
+
+        # 如果選擇開啟資料夾，則運行
+        if reply == 0:
+            os.startfile(os.path.split(path)[0])
+
+
+
+    # 更改
     def slide_change(self):
         if not self.filename:
             return
@@ -290,13 +357,9 @@ class My_MainWindow(QMainWindow, Ui_MainWindow):
         self.show_preview_img(np.copy(self.img_preview), self.default_template, self.default_search)
 
 
-
+    # 顯示預覽影像、自適化調整
     def show_preview_img(self, img, temp, search):
-        h, w, _ = img.shape
-        x, y = w//2, h//2
-
-        # self.default_template = temp
-        # self.default_search = search
+        x, y = self.w//2, self.h//2
 
         t_shift = temp//2
         s_shift = search//2
@@ -306,18 +369,17 @@ class My_MainWindow(QMainWindow, Ui_MainWindow):
         cv2.rectangle(img, (x-s_shift, y-s_shift), (x+s_shift, y+s_shift), (0, 0, 255), 1)
         cv2.rectangle(img, (x-s_shift-t_shift, y-s_shift-t_shift), (x-s_shift+t_shift, y-s_shift+t_shift), (255, 255, 0), 1)
 
-        self.label_preview.setPixmap(QtGui.QPixmap(self.convert2qtimg(img)))
+        self.label_preview.setPixmap(QtGui.QPixmap(gui_tool.convert2qtimg(img)))
         self.label_preview.setScaledContents(True)
 
 
-    # 將cv2轉為 QImg
-    def convert2qtimg(self, img):
-        img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-        height, width, bytesPerComponent = img.shape
-        bytesPerLine = 3 * width
-        QImg = QtGui.QImage(img.data, width, height, bytesPerLine, QtGui.QImage.Format_RGB888)
-        return QImg
+    def spinBox_temp_changed(self, x):
+        self.default_template = x
+        self.show_preview_img(np.copy(self.img_preview), self.default_template, self.default_search)
 
+    def spinBox_search_changed(self, x):
+        self.default_search = x
+        self.show_preview_img(np.copy(self.img_preview), self.default_template, self.default_search)
 
 
 
