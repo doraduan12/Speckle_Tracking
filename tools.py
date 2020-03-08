@@ -99,6 +99,16 @@ class Cv2Tools():
 
         return s1, s2, c1, c2
 
+    def color_iterater(self, x=10):
+        colors = np.linspace(0, 180, x + 1)
+        img = np.zeros((1, 1, 3), dtype='uint8')
 
+        result = []
 
+        for i in range(x):
+            img[:, :, ] = [colors[i], 100, 230]
+            img = cv2.cvtColor(img, cv2.COLOR_HSV2BGR)
 
+            result.append(tuple([int(i) for i in img[0, 0,]]))
+
+        return result

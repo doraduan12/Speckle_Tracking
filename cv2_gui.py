@@ -11,12 +11,12 @@ from tools import Cv2Tools
 # from mouse_event import
 
 cv2_tool = Cv2Tools()
-speckle_tracking = SpeckleTracking()
+
 
 class Cv2Gui():
 
     def __init__(self, imgs:np, delta_x: float, delta_y: float, window_name: str,
-                 temp_size: int=32, default_search: int=10, mode: str='sad'):
+                 temp_size: int=32, default_search: int=10, cost: str='sad'):
 
         self.IMGS = imgs
         self.window_name = window_name
@@ -39,6 +39,12 @@ class Cv2Gui():
         self.img_label = np.copy(self.IMGS)
         self.num_of_img, self.h, self.w, _ = self.IMGS.shape
 
+        # 畫圖顏色
+        self.color_index = 0
+        self.num_of_color = 10
+        self.colors = cv2_tool.color_iterater(x=self.num_of_color)
+        self.current_color = self.colors[self.color_index % self.num_of_color]
+
         # 點相關參數
         self.target_point = []  # -> tuple
         self.track_done = []
@@ -52,12 +58,16 @@ class Cv2Gui():
         cv2.imshow(self.window_name, self.img_label[self.current_page])
         cv2.waitKey(1)
 
+        self.speckle_tracking = SpeckleTracking(cost_method=cost)
+
 
 
     # 重置所有動作
     def reset(self):
         self.img_label = np.copy(self.IMGS)
         cv2.imshow(self.window_name, self.img_label[self.current_page])
+
+        self.color_index = 0
         self.target_point = []
         self.track_done = []
         self.search_point = []
@@ -105,7 +115,8 @@ class Cv2Gui():
 
             # 複製目前畫面，在放開滑鼠之前都在複製畫面上作圖，否則會有許多線段互相覆蓋
             temp_img = np.copy(self.img_label[self.current_page])
-            cv2.line(temp_img, self.point1, (x, y), (0, 0, 255), thickness=1)
+            # print(self.current_color)
+            cv2.line(temp_img, self.point1, (x, y), self.current_color, thickness=1)
 
             # 計算距離、顯示距離的座標
             text_point, d = cv2_tool.count_distance(self.point1, (x, y), self.delta)
@@ -124,9 +135,9 @@ class Cv2Gui():
                 self.point2 = (x, y)
 
                 # 作圖
-                cv2.line(self.img_label[self.current_page], self.point1, self.point2, (0, 0, 255), thickness=1)
-                cv2.circle(self.img_label[self.current_page], self.point1, 0, (0, 0, 255), thickness=2)
-                cv2.circle(self.img_label[self.current_page], self.point2, 0, (0, 0, 255), thickness=2)
+                cv2.line(self.img_label[self.current_page], self.point1, self.point2, self.current_color, thickness=1)
+                cv2.circle(self.img_label[self.current_page], self.point1, 0, self.current_color, thickness=2)
+                cv2.circle(self.img_label[self.current_page], self.point2, 0, self.current_color, thickness=2)
 
                 # 計算距離 -> 尚未加入 List
                 text_point, d = cv2_tool.count_distance(self.point1, self.point2, self.delta)
@@ -150,6 +161,9 @@ class Cv2Gui():
                 print(self.point1, self.point2)
 
                 cv2.imshow(self.window_name, self.img_label[self.current_page])
+
+            self.color_index += 1
+            self.current_color = self.colors[self.color_index % self.num_of_color]
 
 
         # 設定 Search Window（右鍵點擊時）
@@ -234,19 +248,19 @@ class Cv2Gui():
 
 
     # 畫線的 Speckle Tracking
-    def speckle_tracking(self, show=False):
+    def tracking(self, show=False):
         finish_already = True
-
-        for i, (tp, s_shift, done) in enumerate(zip(self.target_point, self.search_shift, self.track_done)):
+        for j, (tp, s_shift, done) in enumerate(zip(self.target_point, self.search_shift, self.track_done)):
 
             # 如果該點完成，跳過該點
             if done: continue
 
             finish_already = False
-            self.track_done[i] = True
-            self.result_point[i] = [tp]
+            self.track_done[j] = True
+            self.result_point[j] = [tp]
+            color = self.colors[(j//2) % self.num_of_color]
 
-            print('Now is tracking point{}.'.format(i + 1))
+            print('Now is tracking point{}.'.format(j + 1))
 
             result = tp
             d_list = []
@@ -254,14 +268,29 @@ class Cv2Gui():
             # 從圖1開始抓出，當作 Candidate
             for i in range(1, self.num_of_img):
                 # target, img1, img2, search_shift, temp_size
-                result = speckle_tracking.full(result, self.IMGS_GRAY[i-1], self.IMGS_GRAY[i], s_shift, self.temp_size)
+                result = self.speckle_tracking.full(result, self.IMGS_GRAY[i-1], self.IMGS_GRAY[i], s_shift, self.temp_size)
+                self.result_point[j].append(result)
 
-                cv2.circle(self.img_label[i], result, 2, (0, 0, 255), thickness=-1)
+                cv2.circle(self.img_label[i], result, 2, color, thickness=-1)
+
+                # 若運算的點為直線的第二端，開始畫線
+                if j % 2 == 1:
+                    # 抓出前次結果的點
+                    p_last = self.result_point[j - 1][i]
+
+                    # 畫線、計算（顯示）距離
+                    cv2.line(self.img_label[i], p_last, result, color, thickness=1)
+                    text_point, d = cv2_tool.count_distance(p_last, result, self.delta)
+                    cv2.putText(self.img_label[i], '{:4.3f}'.format(d), text_point, cv2.FONT_HERSHEY_SIMPLEX, .5, (255, 255, 255), 1)
+                    d_list.append(d)
 
 
                 if show:
                     cv2.imshow(self.window_name, self.img_label[i])
                     cv2.waitKey(1)
+
+        cv2.imshow(self.window_name, self.img_label[0])
+        cv2.waitKey(1)
 
 
 if __name__ == '__main__':

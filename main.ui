@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>796</width>
-    <height>758</height>
+    <width>813</width>
+    <height>773</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -596,7 +596,7 @@
       <x>10</x>
       <y>500</y>
       <width>531</width>
-      <height>211</height>
+      <height>221</height>
      </rect>
     </property>
     <property name="font">
@@ -607,25 +607,6 @@
     </property>
     <property name="title">
      <string>Curve</string>
-    </property>
-   </widget>
-   <widget class="QPushButton" name="btn_save_result">
-    <property name="geometry">
-     <rect>
-      <x>560</x>
-      <y>680</y>
-      <width>101</width>
-      <height>31</height>
-     </rect>
-    </property>
-    <property name="font">
-     <font>
-      <family>Calibri</family>
-      <pointsize>10</pointsize>
-     </font>
-    </property>
-    <property name="text">
-     <string>Save Result</string>
     </property>
    </widget>
    <widget class="QGroupBox" name="groupBox_preview">
@@ -671,31 +652,6 @@
       <set>Qt::AlignCenter</set>
      </property>
     </widget>
-    <widget class="QPushButton" name="btn_run">
-     <property name="geometry">
-      <rect>
-       <x>450</x>
-       <y>400</y>
-       <width>71</width>
-       <height>31</height>
-      </rect>
-     </property>
-     <property name="font">
-      <font>
-       <family>Calibri</family>
-       <pointsize>10</pointsize>
-      </font>
-     </property>
-     <property name="text">
-      <string>Run</string>
-     </property>
-     <property name="autoRepeatDelay">
-      <number>-1</number>
-     </property>
-     <property name="autoRepeatInterval">
-      <number>-1</number>
-     </property>
-    </widget>
     <widget class="QLabel" name="label_manufacturer">
      <property name="geometry">
       <rect>
@@ -720,7 +676,7 @@
       <rect>
        <x>10</x>
        <y>405</y>
-       <width>351</width>
+       <width>331</width>
        <height>21</height>
       </rect>
      </property>
@@ -731,7 +687,7 @@
     <widget class="QPushButton" name="btn_color">
      <property name="geometry">
       <rect>
-       <x>370</x>
+       <x>350</x>
        <y>400</y>
        <width>71</width>
        <height>31</height>
@@ -753,11 +709,181 @@
       <number>-1</number>
      </property>
     </widget>
+    <widget class="QPushButton" name="btn_save_result">
+     <property name="geometry">
+      <rect>
+       <x>430</x>
+       <y>400</y>
+       <width>91</width>
+       <height>31</height>
+      </rect>
+     </property>
+     <property name="font">
+      <font>
+       <family>Calibri</family>
+       <pointsize>10</pointsize>
+      </font>
+     </property>
+     <property name="text">
+      <string>Save Result</string>
+     </property>
+    </widget>
     <zorder>label_preview</zorder>
-    <zorder>btn_run</zorder>
     <zorder>horizontalSlider_preview</zorder>
     <zorder>label_manufacturer</zorder>
     <zorder>btn_color</zorder>
+    <zorder>btn_save_result</zorder>
+   </widget>
+   <widget class="QGroupBox" name="groupBox">
+    <property name="geometry">
+     <rect>
+      <x>560</x>
+      <y>450</y>
+      <width>231</width>
+      <height>271</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <family>Calibri</family>
+      <pointsize>10</pointsize>
+     </font>
+    </property>
+    <property name="title">
+     <string>Cv2 Console</string>
+    </property>
+    <widget class="QWidget" name="horizontalLayoutWidget">
+     <property name="geometry">
+      <rect>
+       <x>9</x>
+       <y>30</y>
+       <width>211</width>
+       <height>31</height>
+      </rect>
+     </property>
+     <layout class="QHBoxLayout" name="horizontalLayout">
+      <property name="spacing">
+       <number>7</number>
+      </property>
+      <property name="leftMargin">
+       <number>5</number>
+      </property>
+      <property name="rightMargin">
+       <number>5</number>
+      </property>
+      <item>
+       <widget class="QLabel" name="label_model">
+        <property name="text">
+         <string>Mode  |</string>
+        </property>
+        <property name="alignment">
+         <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QRadioButton" name="radioButton_line">
+        <property name="font">
+         <font>
+          <pointsize>10</pointsize>
+         </font>
+        </property>
+        <property name="text">
+         <string>line</string>
+        </property>
+        <property name="checked">
+         <bool>true</bool>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QRadioButton" name="radioButton_point">
+        <property name="font">
+         <font>
+          <pointsize>10</pointsize>
+         </font>
+        </property>
+        <property name="text">
+         <string>Point</string>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </widget>
+    <widget class="QWidget" name="horizontalLayoutWidget_2">
+     <property name="geometry">
+      <rect>
+       <x>10</x>
+       <y>70</y>
+       <width>211</width>
+       <height>31</height>
+      </rect>
+     </property>
+     <layout class="QHBoxLayout" name="horizontalLayout_2">
+      <item>
+       <widget class="QLabel" name="label_model_3">
+        <property name="text">
+         <string>Cost  |</string>
+        </property>
+        <property name="alignment">
+         <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QRadioButton" name="radioButton_SAD">
+        <property name="font">
+         <font>
+          <pointsize>10</pointsize>
+         </font>
+        </property>
+        <property name="text">
+         <string>SAD</string>
+        </property>
+        <property name="checked">
+         <bool>true</bool>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QRadioButton" name="radioButton_SSD">
+        <property name="font">
+         <font>
+          <pointsize>10</pointsize>
+         </font>
+        </property>
+        <property name="text">
+         <string>SSD</string>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </widget>
+    <widget class="QPushButton" name="btn_run">
+     <property name="geometry">
+      <rect>
+       <x>130</x>
+       <y>230</y>
+       <width>91</width>
+       <height>31</height>
+      </rect>
+     </property>
+     <property name="font">
+      <font>
+       <family>Calibri</family>
+       <pointsize>10</pointsize>
+      </font>
+     </property>
+     <property name="text">
+      <string>Run</string>
+     </property>
+     <property name="autoRepeatDelay">
+      <number>-1</number>
+     </property>
+     <property name="autoRepeatInterval">
+      <number>-1</number>
+     </property>
+    </widget>
    </widget>
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
@@ -766,7 +892,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>796</width>
+     <width>813</width>
      <height>25</height>
     </rect>
    </property>

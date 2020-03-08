@@ -19,9 +19,7 @@ gui_tool = GuiTools()
 import cgitb
 cgitb.enable( format = 'text')
 
-# TODO 開啟時 search window = 1 的問題
 
-# TODO Cost 方法 選擇器
 # TODO 新增 target point 顯示視窗
 # TODO 新增 點模式／線條模式
 # TODO 顏色轉換
@@ -239,6 +237,20 @@ class My_MainWindow(QMainWindow, Ui_MainWindow):
 
         cv2.destroyAllWindows()
 
+
+        # 判斷模式
+        if self.radioButton_line.isChecked():
+            mode = 'line'
+        elif self.radioButton_point.isChecked():
+            mode = 'point'
+
+        # 判斷 COST 方法
+        if self.radioButton_SAD.isChecked():
+            cost = 'sad'
+        elif self.radioButton_SSD.isChecked():
+            cost = 'ssd'
+
+
         kwargs = {
             'imgs': self.IMGS,
             'window_name': self.filename,
@@ -246,10 +258,11 @@ class My_MainWindow(QMainWindow, Ui_MainWindow):
             'delta_y': float(self.doubleSpinBox_delta_y.value())/1000,
             'temp_size': int(self.spinBox_temp_size.value()),
             'default_search': int(self.spinBox_search_range.value()),
-            'mode': 'sad'
+            'cost': cost
         }
 
         self.cv2_gui = Cv2Gui(**kwargs)
+
 
         while True:
             cv2.setMouseCallback(self.cv2_gui.window_name, self.cv2_gui.click_event)  # 設定滑鼠回饋事件
@@ -267,7 +280,7 @@ class My_MainWindow(QMainWindow, Ui_MainWindow):
             # 「s」 執行 speckle tracking
             if action == 'speckle':
                 t1 = time.time()
-                self.cv2_gui.speckle_tracking(show=False)
+                self.cv2_gui.tracking(show=True)
                 t2 = time.time()
                 print('Speckle Tracking costs {} seconds.\n'.format(t2 - t1))
 
