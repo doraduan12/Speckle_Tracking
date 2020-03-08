@@ -2,6 +2,10 @@ import pydicom
 import cv2
 import numpy as np
 import matplotlib.pyplot as plt
+import matplotlib
+matplotlib.use("Qt5Agg")  # 声明使用QT5
+from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
+from matplotlib.figure import Figure
 
 import sys
 import os
@@ -12,6 +16,7 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtCore import pyqtSlot
 from PyQt5.QtWidgets import QFileDialog, QMainWindow, QMessageBox
 from main_window import Ui_MainWindow
+
 
 from cv2_gui import Cv2Gui
 from tools import GuiTools
@@ -33,7 +38,6 @@ class My_MainWindow(QMainWindow, Ui_MainWindow):
         self.setupUi(self)
 
         self.setup()
-
 
 
     def setup(self):
@@ -296,8 +300,17 @@ class My_MainWindow(QMainWindow, Ui_MainWindow):
                     plt.plot([i for i in range(self.num_of_img)], gui_tool.lsq_spline_medain(strain), color=color)
                     # plt.plot([i for i in range(self.num_of_img)], strain, color=color)
 
-                plt.show()
+                plt.axhline(0, color='k', alpha=0.2)
+                # TODO 改善顯示流程
+                plt.savefig(self.default_path+ '/strain.png')
 
+                # 曲線的座標
+                plt.xlabel('frame')
+                plt.ylabel('Strain')
+                plt.title('Strain curve')
+
+                self.label_curve.setPixmap(QtGui.QPixmap(gui_tool.convert2qtimg(cv2.imread(self.default_path+ '/strain.png'))))
+                self.label_curve.setScaledContents(True)
 
 
             # 「t」 增加預設點數（測試時用）

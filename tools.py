@@ -45,21 +45,24 @@ class GuiTools():
         min = np.min(y)
         stage = (max-min)/10
 
-        start = np.where(np.abs(y-y[0]) > stage)[0][0]
-        end = np.where(np.abs(y-y[-1]) > stage)[0][-1]
+        try:
+            start = np.where(np.abs(y-y[0]) > stage)[0][0]
+            end = np.where(np.abs(y-y[-1]) > stage)[0][-1]
 
-        start_split = y[:start]
-        end_split = y[end+1:]
-        median_split = y[start:end+1]
+            start_split = y[:start]
+            end_split = y[end+1:]
+            median_split = y[start:end+1]
 
-        l = len(median_split)
-        x_split = np.asarray([i for i in range(l)])
-        t = np.linspace(0, l, num=5, dtype='int').reshape(-1)
-        t = np.r_[(0,) * (k + 1), t[1:-1], (l - 1,) * (k + 1)]
+            l = len(median_split)
+            x_split = np.asarray([i for i in range(l)])
+            t = np.linspace(0, l, num=5, dtype='int').reshape(-1)
+            t = np.r_[(0,) * (k + 1), t[1:-1], (l - 1,) * (k + 1)]
 
-        spl = make_lsq_spline(x_split, median_split, t, k)
+            spl = make_lsq_spline(x_split, median_split, t, k)
 
-        output = np.hstack((start_split, spl(x_split), end_split))
+            output = np.hstack((start_split, spl(x_split), end_split))
+        except:
+            output = y
 
         return output
 

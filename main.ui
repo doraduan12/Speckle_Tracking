@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>813</width>
-    <height>773</height>
+    <height>870</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -57,7 +57,7 @@
       <x>560</x>
       <y>50</y>
       <width>231</width>
-      <height>391</height>
+      <height>441</height>
      </rect>
     </property>
     <property name="font">
@@ -595,8 +595,8 @@
      <rect>
       <x>10</x>
       <y>500</y>
-      <width>531</width>
-      <height>221</height>
+      <width>481</width>
+      <height>311</height>
      </rect>
     </property>
     <property name="font">
@@ -608,6 +608,31 @@
     <property name="title">
      <string>Curve</string>
     </property>
+    <widget class="QLabel" name="label_curve">
+     <property name="geometry">
+      <rect>
+       <x>10</x>
+       <y>20</y>
+       <width>461</width>
+       <height>281</height>
+      </rect>
+     </property>
+     <property name="font">
+      <font>
+       <family>Calibri</family>
+       <pointsize>12</pointsize>
+      </font>
+     </property>
+     <property name="styleSheet">
+      <string notr="true">background-color: rgba(220, 220, 220, 200);</string>
+     </property>
+     <property name="text">
+      <string/>
+     </property>
+     <property name="alignment">
+      <set>Qt::AlignCenter</set>
+     </property>
+    </widget>
    </widget>
    <widget class="QGroupBox" name="groupBox_preview">
     <property name="geometry">
@@ -737,10 +762,10 @@
    <widget class="QGroupBox" name="groupBox">
     <property name="geometry">
      <rect>
-      <x>560</x>
-      <y>450</y>
-      <width>231</width>
-      <height>271</height>
+      <x>500</x>
+      <y>500</y>
+      <width>291</width>
+      <height>311</height>
      </rect>
     </property>
     <property name="font">
@@ -757,7 +782,7 @@
       <rect>
        <x>9</x>
        <y>30</y>
-       <width>211</width>
+       <width>271</width>
        <height>31</height>
       </rect>
      </property>
@@ -815,7 +840,7 @@
       <rect>
        <x>10</x>
        <y>70</y>
-       <width>211</width>
+       <width>271</width>
        <height>31</height>
       </rect>
      </property>
@@ -862,8 +887,8 @@
     <widget class="QPushButton" name="btn_run">
      <property name="geometry">
       <rect>
-       <x>130</x>
-       <y>230</y>
+       <x>190</x>
+       <y>260</y>
        <width>91</width>
        <height>31</height>
       </rect>
