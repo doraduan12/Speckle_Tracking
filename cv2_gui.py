@@ -17,7 +17,7 @@ delay_time = 1000
 class Cv2Line():
 
     def __init__(self, imgs:np, delta_x: float, delta_y: float, window_name: str,
-                 temp_size: int=32, default_search: int=10, cost: str='sad'):
+                 temp_size: int=32, default_search: int=10, cost: str='sad', draw_delay: int=10):
 
         self.IMGS = imgs
         self.window_name = window_name
@@ -76,6 +76,7 @@ class Cv2Line():
         self.search_shift = []
         self.result_point = {}
         self.result_distance = {}
+        self.result_strain = {}
 
         print('Reseting complete.')
 
@@ -308,7 +309,7 @@ class Cv2Line():
 class Cv2Point():
 
     def __init__(self, imgs:np, delta_x: float, delta_y: float, window_name: str,
-                 temp_size: int=32, default_search: int=10, cost: str='sad'):
+                 temp_size: int=32, default_search: int=10, cost: str='sad', draw_delay: int=10):
 
         self.IMGS = imgs
         self.window_name = window_name
@@ -316,6 +317,8 @@ class Cv2Point():
         self.current_page = 0
         self.default_search = default_search
         self.temp_size = temp_size
+        self.draw_delay = draw_delay
+        self.draw_count = 0
 
         self.delta_x = delta_x
         self.delta_y = delta_y
@@ -334,8 +337,6 @@ class Cv2Point():
         self.target_point = []  # -> tuple
         self.track_done = []
         self.result_point = {}
-        self.result_distance = {}
-        self.result_strain = {}
 
         # 顯示
         cv2.namedWindow(self.window_name, cv2.WINDOW_AUTOSIZE)
@@ -356,7 +357,6 @@ class Cv2Point():
         self.search_point = []
         self.search_shift = []
         self.result_point = {}
-        self.result_distance = {}
 
         print('Reseting complete.')
 
@@ -372,6 +372,15 @@ class Cv2Point():
         cv2.imshow(self.window_name, self.img_label[self.current_page])
 
 
+    def draw_point(self, x, y):
+        if (x, y) not in self.target_point:
+            self.target_point.append((x, y))
+            self.track_done.append(False)
+            cv2.circle(self.img_label[self.current_page], (x, y), 1, (0, 0, 255), -1)
+
+            # 刷新畫面
+            cv2.imshow(self.window_name, self.img_label[self.current_page])
+            cv2.waitKey(1)
 
 
     # 滑鼠事件
@@ -388,39 +397,22 @@ class Cv2Point():
             cv2.setTrackbarPos('No', self.window_name, self.current_page)
 
 
+
         # 劃出線段（左鍵點擊時）
         if event == cv2.EVENT_LBUTTONDOWN:
-            if (x, y) not in self.target_point:
-                self.target_point.append((x, y))
-                self.track_done.append(False)
-                cv2.circle(self.img_label[self.current_page], (x, y), 1, (0, 0, 255), -1)
-
-                # 刷新畫面
-                cv2.imshow(self.window_name, self.img_label[self.current_page])
-                cv2.waitKey(1)
+            self.draw_point(x, y)
+            self.draw_count += 1
 
         # 預覽線段（左鍵拖曳時）
         elif flags == 1 & cv2.EVENT_FLAG_LBUTTON:
-            if (x, y) not in self.target_point:
-                self.target_point.append((x, y))
-                self.track_done.append(False)
-                cv2.circle(self.img_label[self.current_page], (x, y), 1, (0, 0, 255), -1)
-
-                # 刷新畫面
-                cv2.imshow(self.window_name, self.img_label[self.current_page])
-                cv2.waitKey(1)
+            if self.draw_count % self.draw_delay == 0:
+                self.draw_point(x, y)
+            self.draw_count += 1
 
         # 確定線段（左鍵放開時）
         elif event == cv2.EVENT_LBUTTONUP:
-            if (x, y) not in self.target_point:
-                self.target_point.append((x, y))
-                self.track_done.append(False)
-                cv2.circle(self.img_label[self.current_page], (x, y), 1, (0, 0, 255), -1)
-
-                # 刷新畫面
-                cv2.imshow(self.window_name, self.img_label[self.current_page])
-                cv2.waitKey(1)
-
+            self.draw_point(x, y)
+            self.draw_count = 0
 
 
         # 設定 Search Window（右鍵點擊時）
@@ -439,19 +431,21 @@ class Cv2Point():
 
     # 測試時方便建立線段
     def addPoint(self, point):
-        self.target_point.append(point1)
+        self.target_point.append(point)
         self.track_done.append(False)
 
         # 作圖
         cv2.circle(self.img_label[self.current_page], point, 1, (0, 0, 255), thickness=-1)
-
+        cv2.imshow(self.window_name, self.img_label[self.current_page])
+        cv2.waitKey(1)
 
 
     # TODO point tracking
     # 畫線的 Speckle Tracking
     def tracking(self, show=False):
         finish_already = True
-        for j, (tp, s_shift, done) in enumerate(zip(self.target_point, self.search_shift, self.track_done)):
+        search_shift = (self.default_search//2, self.default_search//2)
+        for j, (tp, done) in enumerate(zip(self.target_point, self.track_done)):
 
             # 如果該點完成，跳過該點
             if done: continue
@@ -460,31 +454,16 @@ class Cv2Point():
             self.track_done[j] = True
             self.result_point[j] = [tp]
 
-
-            color = self.colors[(j//2) % self.num_of_color]
-
-            print('Now is tracking point{}.'.format(j + 1))
+            print('Now is tracking point{}/{}.'.format(j + 1, len(self.target_point)))
 
             result = tp
 
             # 從圖1開始抓出，當作 Candidate
             for i in range(1, self.num_of_img):
                 # target, img1, img2, search_shift, temp_size
-                result = self.speckle_tracking.full(result, self.IMGS_GRAY[i-1], self.IMGS_GRAY[i], s_shift, self.temp_size)
+                result = self.speckle_tracking.full(result, self.IMGS_GRAY[i-1], self.IMGS_GRAY[i], search_shift, self.temp_size)
                 self.result_point[j].append(result)
-
-                cv2.circle(self.img_label[i], result, 2, color, thickness=-1)
-
-                # 若運算的點為直線的第二端，開始畫線
-                if j % 2 == 1:
-                    # 抓出前次結果的點
-                    p_last = self.result_point[j - 1][i]
-
-                    # 畫線、計算（顯示）距離
-                    cv2.line(self.img_label[i], p_last, result, color, thickness=1)
-                    text_point, d = cv2_tool.count_distance(p_last, result, self.delta)
-                    cv2.putText(self.img_label[i], '{:4.3f}'.format(d), text_point, cv2.FONT_HERSHEY_SIMPLEX, .5, (255, 255, 255), 1)
-                    self.result_distance[j//2].append(d)
+                cv2.circle(self.img_label[i], result, 1, (0, 0, 255), thickness=-1)
 
                 if show:
                     cv2.imshow(self.window_name, self.img_label[i])

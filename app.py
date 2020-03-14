@@ -69,6 +69,11 @@ class My_MainWindow(QMainWindow, Ui_MainWindow):
         self.btn_save_result.clicked.connect(self.clicked_btn_save_result)
         self.btn_save_csv.clicked.connect(self.clicked_btn_ave_csv)
 
+        #
+        self.label_DRAW_DELAY.hide()
+        self.spinBox_draw_delay.hide()
+        self.radioButton_point.toggled.connect(self.radio_btn_change)
+
 
     # 按下 選路徑(btn_path) 按鈕的動作
     @pyqtSlot()
@@ -217,6 +222,10 @@ class My_MainWindow(QMainWindow, Ui_MainWindow):
             self.spinBox_search_range.setValue(self.default_search)
             self.spinBox_search_range.setRange(1, self.h//2)
 
+            # 預設的 draw delay
+            self.default_draw_delay = 10
+            self.spinBox_draw_delay.setValue(self.default_draw_delay)
+            self.spinBox_draw_delay.setRange(1, 100)
 
             # 建立預覽圖片、自適化調整
             self.show_preview_img(np.copy(self.img_preview), self.default_template, self.default_search)
@@ -241,6 +250,9 @@ class My_MainWindow(QMainWindow, Ui_MainWindow):
 
         cv2.destroyAllWindows()
 
+        # 清除 strain curve 圖片
+        self.label_curve.setPixmap(QtGui.QPixmap(""))
+
 
         # 判斷模式
         if self.radioButton_line.isChecked():
@@ -262,12 +274,19 @@ class My_MainWindow(QMainWindow, Ui_MainWindow):
             'delta_y': float(self.doubleSpinBox_delta_y.value())/1000,
             'temp_size': int(self.spinBox_temp_size.value()),
             'default_search': int(self.spinBox_search_range.value()),
-            'cost': cost
+            'cost': cost,
+            'draw_delay': int(self.spinBox_draw_delay.value())
         }
 
-        # self.cv2_gui = Cv2Line(**kwargs)
-        self.cv2_gui = Cv2Point(**kwargs)
+        # 設定模式
+        if self.radioButton_line.isChecked():
+            self.mode = 'line'
+            self.cv2_gui = Cv2Line(**kwargs)
+        elif self.radioButton_point.isChecked():
+            self.mode = 'point'
+            self.cv2_gui = Cv2Point(**kwargs)
 
+        show = True if self.checkBox_show_process.isChecked() else False
 
         while True:
             cv2.setMouseCallback(self.cv2_gui.window_name, self.cv2_gui.click_event)  # 設定滑鼠回饋事件
@@ -285,45 +304,54 @@ class My_MainWindow(QMainWindow, Ui_MainWindow):
             # 「s」 執行 speckle tracking
             if action == 'speckle':
                 t1 = time.time()
-                self.cv2_gui.tracking(show=True)
+                self.cv2_gui.tracking(show=show)
                 t2 = time.time()
                 print('Speckle Tracking costs {} seconds.\n'.format(t2 - t1))
 
+                if self.mode == 'line':
+                    # 開始繪圖
+                    plt.figure()
+                    for i in self.cv2_gui.result_distance.keys():
 
-                # 開始繪圖
-                plt.figure()
-                for i in self.cv2_gui.result_distance.keys():
+                        d_list = np.asarray(self.cv2_gui.result_distance[i])
+                        strain = (d_list - d_list[0]) / d_list[0]
 
-                    d_list = np.asarray(self.cv2_gui.result_distance[i])
-                    strain = (d_list - d_list[0]) / d_list[0]
+                        self.cv2_gui.result_strain[i] = list(strain)
 
-                    self.cv2_gui.result_strain[i] = list(strain)
+                        # 抓出對應的顏色，並轉呈 matplotlib 的 RGB 0-1 格式
+                        color = tuple([self.cv2_gui.colors[i][-j]/255 for j in range(1, 4)])
+                        plt.plot([i for i in range(self.num_of_img)], gui_tool.lsq_spline_medain(strain), color=color)
+                        # plt.plot([i for i in range(self.num_of_img)], strain, color=color)
 
-                    # 抓出對應的顏色，並轉呈 matplotlib 的 RGB 0-1 格式
-                    color = tuple([self.cv2_gui.colors[i][-j]/255 for j in range(1, 4)])
-                    plt.plot([i for i in range(self.num_of_img)], gui_tool.lsq_spline_medain(strain), color=color)
-                    # plt.plot([i for i in range(self.num_of_img)], strain, color=color)
+                    plt.axhline(0, color='k', alpha=0.2)
+                    # TODO 改善顯示流程
 
-                plt.axhline(0, color='k', alpha=0.2)
-                # TODO 改善顯示流程
+                    # 曲線的座標
+                    plt.xlabel('frame')
+                    plt.ylabel('Strain')
+                    plt.title('Strain curve')
 
-                # 曲線的座標
-                plt.xlabel('frame')
-                plt.ylabel('Strain')
-                plt.title('Strain curve')
+                    plt.savefig(self.default_path + '/strain.png')
 
-                plt.savefig(self.default_path + '/strain.png')
+                    # TODO 解決讀取中文路徑會出錯的問題
+                    self.label_curve.setPixmap(QtGui.QPixmap(gui_tool.convert2qtimg(cv2.imread(self.default_path + '/strain.png'))))
+                    self.label_curve.setScaledContents(True)
 
-                # TODO 解決讀取中文路徑會出錯的問題
-                self.label_curve.setPixmap(QtGui.QPixmap(gui_tool.convert2qtimg(cv2.imread(self.default_path + '/strain.png'))))
-                self.label_curve.setScaledContents(True)
-
+                elif self.mode == 'point':
+                    pass
 
             # 「t」 增加預設點數（測試時用）
             if action == 'test':
                 print('add point')
-                self.cv2_gui.addPoint((224, 217), (243, 114))
-                self.cv2_gui.addPoint((313, 122), (374, 292))
+                if self.mode == 'line':
+                    self.cv2_gui.addPoint((224, 217), (243, 114))
+                    self.cv2_gui.addPoint((313, 122), (374, 292))
+                elif self.mode == 'point':
+                    self.cv2_gui.addPoint((224, 217))
+                    self.cv2_gui.addPoint((243, 114))
+                    self.cv2_gui.addPoint((224, 217))
+                    self.cv2_gui.addPoint((374, 292))
+
 
             # 按空白鍵查看點數狀況
             if action == 'space':
@@ -389,25 +417,34 @@ class My_MainWindow(QMainWindow, Ui_MainWindow):
         if reply == 0:
             os.startfile(os.path.split(path)[0])
 
+
+    # 儲存成 CSV 檔案
     def clicked_btn_ave_csv(self):
         # 如果尚未選擇影像，或是尚未運行 cv2，不運行按鈕
         if not self.filename or not self.cv2_gui:
             return
-
+        print(self.cv2_gui.result_point)
         path, filetype = QFileDialog.getSaveFileName(self, "文件保存", self.default_path + '/' + self.default_filename + '.csv', "All Files (*);;CSV Files (*.csv)")
 
         # 如果沒有選擇存檔路徑，結束 function
         if not path:
             return
 
+        # 將結果點轉成 dataframe、更改 colums 文字
         select_df = pd.DataFrame(self.cv2_gui.result_point)
+        select_df.columns = ['Point {}'.format(i) for i in select_df.columns]
 
-        for i, (d, s) in enumerate(zip(self.cv2_gui.result_distance.values(), self.cv2_gui.result_strain.values())):
-            select_df.insert(i * 4 + 2, 'Distance {} -> {}'.format(i * 2, i * 2 + 1), d)
-            select_df.insert(i * 4 + 3, 'Strain {} -> {}'.format(i * 2, i * 2 + 1), s)
+
+        if self.mode == 'line':
+            for i, (d, s) in enumerate(zip(self.cv2_gui.result_distance.values(), self.cv2_gui.result_strain.values())):
+                select_df.insert(i * 4 + 2, 'Distance {} -> {}'.format(i * 2, i * 2 + 1), d)
+                select_df.insert(i * 4 + 3, 'Strain {} -> {}'.format(i * 2, i * 2 + 1), s)
+
 
 
         select_df.to_csv(path, index=True, sep=',')
+
+
 
         # 通知視窗
         msg = QMessageBox()
@@ -424,6 +461,14 @@ class My_MainWindow(QMainWindow, Ui_MainWindow):
         if reply == 0:
             os.startfile(os.path.split(path)[0])
 
+
+    def radio_btn_change(self):
+        if self.radioButton_point.isChecked():
+            self.label_DRAW_DELAY.show()
+            self.spinBox_draw_delay.show()
+        else:
+            self.label_DRAW_DELAY.hide()
+            self.spinBox_draw_delay.hide()
 
 
     # 更改
