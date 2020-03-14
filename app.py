@@ -19,7 +19,7 @@ from PyQt5.QtWidgets import QFileDialog, QMainWindow, QMessageBox
 from main_window import Ui_MainWindow
 
 
-from cv2_gui import Cv2Gui
+from cv2_gui import *
 from tools import GuiTools
 gui_tool = GuiTools()
 
@@ -265,7 +265,8 @@ class My_MainWindow(QMainWindow, Ui_MainWindow):
             'cost': cost
         }
 
-        self.cv2_gui = Cv2Gui(**kwargs)
+        # self.cv2_gui = Cv2Line(**kwargs)
+        self.cv2_gui = Cv2Point(**kwargs)
 
 
         while True:
