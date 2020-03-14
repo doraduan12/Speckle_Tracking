@@ -50,6 +50,7 @@ class Cv2Gui():
         self.search_shift = []
         self.result_point = {}
         self.result_distance = {}
+        self.result_strain = {}
 
         # 顯示
         cv2.namedWindow(self.window_name, cv2.WINDOW_AUTOSIZE)

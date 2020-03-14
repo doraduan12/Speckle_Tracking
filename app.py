@@ -2,6 +2,7 @@ import pydicom
 import cv2
 import numpy as np
 import matplotlib.pyplot as plt
+import pandas as pd
 import matplotlib
 matplotlib.use("Qt5Agg")  # 声明使用QT5
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
@@ -26,10 +27,11 @@ import cgitb
 cgitb.enable( format = 'text')
 
 
-# TODO 新增 target point 顯示視窗
 # TODO 新增 點模式／線條模式
 # TODO 顏色轉換
+# TODO 重製 temp 與 search 按鈕
 
+# TODO 新增 target point 顯示視窗??
 # TODO 新贓錨點??
 
 class My_MainWindow(QMainWindow, Ui_MainWindow):
@@ -59,12 +61,13 @@ class My_MainWindow(QMainWindow, Ui_MainWindow):
         # 按下 COLOR 轉換色彩
         self.btn_color.clicked.connect(self.clicked_btn_color)
 
-        # 按下儲存解果
-        self.btn_save_result.clicked.connect(self.clicked_btn_save_result)
-
         # 滑動 horizontal slide 的動作
         self.horizontalSlider_preview.valueChanged.connect(self.slide_change)
 
+        # SAVE 相關
+        # 按下儲存結果
+        self.btn_save_result.clicked.connect(self.clicked_btn_save_result)
+        self.btn_save_csv.clicked.connect(self.clicked_btn_ave_csv)
 
 
     # 按下 選路徑(btn_path) 按鈕的動作
@@ -83,7 +86,7 @@ class My_MainWindow(QMainWindow, Ui_MainWindow):
                 file = files[0]
                 browse_path = file
                 self.default_path, self.default_filename = os.path.split(browse_path)
-                self.default_filename = self.default_filename.split('.')[0] + '.mp4'
+                self.default_filename = self.default_filename.split('.')[0]
                 self.filename = os.path.splitext(os.path.split(file)[-1])[0]
 
                 dicom = pydicom.read_file(file)
@@ -150,7 +153,7 @@ class My_MainWindow(QMainWindow, Ui_MainWindow):
 
                 # 輸出影向預設的路徑與檔案名稱
                 self.default_path = os.path.split(browse_path)[0]
-                self.default_filename = self.filename + '.mp4'
+                self.default_filename = self.filename
 
                 # 排序圖檔
                 files = np.asarray(files)
@@ -224,8 +227,6 @@ class My_MainWindow(QMainWindow, Ui_MainWindow):
         else:
             pass
 
-
-
     @pyqtSlot()
     def clicked_btn_run(self):
 
@@ -295,6 +296,8 @@ class My_MainWindow(QMainWindow, Ui_MainWindow):
                     d_list = np.asarray(self.cv2_gui.result_distance[i])
                     strain = (d_list - d_list[0]) / d_list[0]
 
+                    self.cv2_gui.result_strain[i] = list(strain)
+
                     # 抓出對應的顏色，並轉呈 matplotlib 的 RGB 0-1 格式
                     color = tuple([self.cv2_gui.colors[i][-j]/255 for j in range(1, 4)])
                     plt.plot([i for i in range(self.num_of_img)], gui_tool.lsq_spline_medain(strain), color=color)
@@ -302,14 +305,16 @@ class My_MainWindow(QMainWindow, Ui_MainWindow):
 
                 plt.axhline(0, color='k', alpha=0.2)
                 # TODO 改善顯示流程
-                plt.savefig(self.default_path+ '/strain.png')
 
                 # 曲線的座標
                 plt.xlabel('frame')
                 plt.ylabel('Strain')
                 plt.title('Strain curve')
 
-                self.label_curve.setPixmap(QtGui.QPixmap(gui_tool.convert2qtimg(cv2.imread(self.default_path+ '/strain.png'))))
+                plt.savefig(self.default_path + '/strain.png')
+
+                # TODO 解決讀取中文路徑會出錯的問題
+                self.label_curve.setPixmap(QtGui.QPixmap(gui_tool.convert2qtimg(cv2.imread(self.default_path + '/strain.png'))))
                 self.label_curve.setScaledContents(True)
 
 
@@ -329,8 +334,6 @@ class My_MainWindow(QMainWindow, Ui_MainWindow):
 
         cv2.destroyWindow(self.cv2_gui.window_name)  # （按 esc 跳出迴圈後）關閉視窗
 
-
-
     # TODO 待修正
     @pyqtSlot()
     def clicked_btn_color(self):
@@ -344,15 +347,13 @@ class My_MainWindow(QMainWindow, Ui_MainWindow):
         # 建立預覽圖片、自適化調整
         self.show_preview_img(np.copy(self.img_preview), self.default_search, self.default_search)
 
-
     # 存檔的按鈕
     def clicked_btn_save_result(self):
-
         # 如果尚未選擇影像，或是尚未運行 cv2，不運行按鈕
         if not self.filename or not self.cv2_gui:
             return
 
-        path, filetype = QFileDialog.getSaveFileName(self, "文件保存", self.default_path + '/' + self.default_filename, "All Files (*);;MP4 Files (*.mp4)")
+        path, filetype = QFileDialog.getSaveFileName(self, "文件保存", self.default_path + '/' + self.default_filename + '.mp4', "All Files (*);;MP4 Files (*.mp4)")
 
         # 如果沒有選擇存檔路徑，結束 function
         if not path:
@@ -371,6 +372,41 @@ class My_MainWindow(QMainWindow, Ui_MainWindow):
             videowriter.write(img)
         videowriter.release()
 
+
+        # 通知視窗
+        msg = QMessageBox()
+        msg.setWindowTitle('Save completed.')
+        msg.setIcon(QMessageBox.Information)
+        msg.setText('Result saved finish.\n')
+
+        Open = msg.addButton('Show in explorer', QMessageBox.AcceptRole)
+        Ok = msg.addButton('OK', QMessageBox.DestructiveRole)
+        msg.setDefaultButton(Ok)
+        reply = msg.exec()
+
+        # 如果選擇開啟資料夾，則運行
+        if reply == 0:
+            os.startfile(os.path.split(path)[0])
+
+    def clicked_btn_ave_csv(self):
+        # 如果尚未選擇影像，或是尚未運行 cv2，不運行按鈕
+        if not self.filename or not self.cv2_gui:
+            return
+
+        path, filetype = QFileDialog.getSaveFileName(self, "文件保存", self.default_path + '/' + self.default_filename + '.csv', "All Files (*);;CSV Files (*.csv)")
+
+        # 如果沒有選擇存檔路徑，結束 function
+        if not path:
+            return
+
+        select_df = pd.DataFrame(self.cv2_gui.result_point)
+
+        for i, (d, s) in enumerate(zip(self.cv2_gui.result_distance.values(), self.cv2_gui.result_strain.values())):
+            select_df.insert(i * 4 + 2, 'Distance {} -> {}'.format(i * 2, i * 2 + 1), d)
+            select_df.insert(i * 4 + 3, 'Strain {} -> {}'.format(i * 2, i * 2 + 1), s)
+
+
+        select_df.to_csv(path, index=True, sep=',')
 
         # 通知視窗
         msg = QMessageBox()
@@ -422,6 +458,11 @@ class My_MainWindow(QMainWindow, Ui_MainWindow):
     def spinBox_search_changed(self, x):
         self.default_search = x
         self.show_preview_img(np.copy(self.img_preview), self.default_template, self.default_search)
+
+
+
+
+
 
 
 
