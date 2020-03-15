@@ -298,12 +298,19 @@ class Cv2Line():
                     cv2.putText(self.img_label[i], '{:4.3f}'.format(d), text_point, cv2.FONT_HERSHEY_SIMPLEX, .5, (255, 255, 255), 1)
                     self.result_distance[j//2].append(d)
 
+
+
+
                 if show:
                     cv2.imshow(self.window_name, self.img_label[i])
                     cv2.waitKey(1)
 
         cv2.imshow(self.window_name, self.img_label[0])
         cv2.waitKey(1)
+
+        for i in self.result_distance.keys():
+            d_list = np.asarray(self.result_distance[i])
+            self.result_strain[i] = list((d_list - d_list[0]) / d_list[0])
 
 
 class Cv2Point():

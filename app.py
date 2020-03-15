@@ -27,7 +27,6 @@ import cgitb
 cgitb.enable( format = 'text')
 
 
-# TODO 新增 點模式／線條模式
 # TODO 顏色轉換
 # TODO 重製 temp 與 search 按鈕
 
@@ -39,6 +38,10 @@ class My_MainWindow(QMainWindow, Ui_MainWindow):
         super().__init__()
         self.setupUi(self)
 
+        # 先將顏色功能藏起來
+        self.btn_color.hide()
+
+
         self.setup()
 
 
@@ -47,6 +50,7 @@ class My_MainWindow(QMainWindow, Ui_MainWindow):
         # 初始化防止特定錯誤
         self.filename = ''
         self.cv2_gui = ''
+        self.mode = ''
 
         # 按下 選路徑(btn_path) 按鈕
         self.btn_browse.clicked.connect(self.clicked_btn_path)
@@ -70,9 +74,13 @@ class My_MainWindow(QMainWindow, Ui_MainWindow):
         self.btn_save_csv.clicked.connect(self.clicked_btn_ave_csv)
 
         #
-        self.label_DRAW_DELAY.hide()
-        self.spinBox_draw_delay.hide()
-        self.radioButton_point.toggled.connect(self.radio_btn_change)
+        self.label_DRAWING_DELAY.hide()
+        self.spinBox_drawing_delay.hide()
+        self.radioButton_draw.toggled.connect(self.radio_btn_draw_change)
+
+        #
+        self.radioButton_spline.toggled.connect(self.radio_btn_curve_change)
+        self.radioButton_strain.toggled.connect(self.radio_btn_curve_change)
 
 
     # 按下 選路徑(btn_path) 按鈕的動作
@@ -224,8 +232,8 @@ class My_MainWindow(QMainWindow, Ui_MainWindow):
 
             # 預設的 draw delay
             self.default_draw_delay = 10
-            self.spinBox_draw_delay.setValue(self.default_draw_delay)
-            self.spinBox_draw_delay.setRange(1, 100)
+            self.spinBox_drawing_delay.setValue(self.default_draw_delay)
+            self.spinBox_drawing_delay.setRange(1, 100)
 
             # 建立預覽圖片、自適化調整
             self.show_preview_img(np.copy(self.img_preview), self.default_template, self.default_search)
@@ -251,13 +259,13 @@ class My_MainWindow(QMainWindow, Ui_MainWindow):
         cv2.destroyAllWindows()
 
         # 清除 strain curve 圖片
-        self.label_curve.setPixmap(QtGui.QPixmap(""))
+        self.label_show_curve.setPixmap(QtGui.QPixmap(""))
 
 
         # 判斷模式
         if self.radioButton_line.isChecked():
             mode = 'line'
-        elif self.radioButton_point.isChecked():
+        elif self.radioButton_draw.isChecked():
             mode = 'point'
 
         # 判斷 COST 方法
@@ -275,18 +283,17 @@ class My_MainWindow(QMainWindow, Ui_MainWindow):
             'temp_size': int(self.spinBox_temp_size.value()),
             'default_search': int(self.spinBox_search_range.value()),
             'cost': cost,
-            'draw_delay': int(self.spinBox_draw_delay.value())
+            'draw_delay': int(self.spinBox_drawing_delay.value())
         }
 
         # 設定模式
         if self.radioButton_line.isChecked():
             self.mode = 'line'
             self.cv2_gui = Cv2Line(**kwargs)
-        elif self.radioButton_point.isChecked():
+        elif self.radioButton_draw.isChecked():
             self.mode = 'point'
             self.cv2_gui = Cv2Point(**kwargs)
 
-        show = True if self.checkBox_show_process.isChecked() else False
 
         while True:
             cv2.setMouseCallback(self.cv2_gui.window_name, self.cv2_gui.click_event)  # 設定滑鼠回饋事件
@@ -299,44 +306,19 @@ class My_MainWindow(QMainWindow, Ui_MainWindow):
 
             # 「r」 重置
             if action == 'reset':
+                # 清除 strain curve 圖片
+                self.label_show_curve.setPixmap(QtGui.QPixmap(""))
                 self.cv2_gui.reset()
 
             # 「s」 執行 speckle tracking
             if action == 'speckle':
                 t1 = time.time()
-                self.cv2_gui.tracking(show=show)
+                self.cv2_gui.tracking(show=True if self.checkBox_show_process.isChecked() else False)
                 t2 = time.time()
                 print('Speckle Tracking costs {} seconds.\n'.format(t2 - t1))
 
                 if self.mode == 'line':
-                    # 開始繪圖
-                    plt.figure()
-                    for i in self.cv2_gui.result_distance.keys():
-
-                        d_list = np.asarray(self.cv2_gui.result_distance[i])
-                        strain = (d_list - d_list[0]) / d_list[0]
-
-                        self.cv2_gui.result_strain[i] = list(strain)
-
-                        # 抓出對應的顏色，並轉呈 matplotlib 的 RGB 0-1 格式
-                        color = tuple([self.cv2_gui.colors[i][-j]/255 for j in range(1, 4)])
-                        plt.plot([i for i in range(self.num_of_img)], gui_tool.lsq_spline_medain(strain), color=color)
-                        # plt.plot([i for i in range(self.num_of_img)], strain, color=color)
-
-                    plt.axhline(0, color='k', alpha=0.2)
-                    # TODO 改善顯示流程
-
-                    # 曲線的座標
-                    plt.xlabel('frame')
-                    plt.ylabel('Strain')
-                    plt.title('Strain curve')
-
-                    plt.savefig(self.default_path + '/strain.png')
-
-                    # TODO 解決讀取中文路徑會出錯的問題
-                    self.label_curve.setPixmap(QtGui.QPixmap(gui_tool.convert2qtimg(cv2.imread(self.default_path + '/strain.png'))))
-                    self.label_curve.setScaledContents(True)
-
+                    self.plot_strain_curve()
                 elif self.mode == 'point':
                     pass
 
@@ -362,6 +344,49 @@ class My_MainWindow(QMainWindow, Ui_MainWindow):
                 print()
 
         cv2.destroyWindow(self.cv2_gui.window_name)  # （按 esc 跳出迴圈後）關閉視窗
+
+
+    def plot_strain_curve(self):
+        # 開始繪圖
+        plt.figure()
+        plt.axhline(0, color='k', alpha=0.2)
+        plt.xlabel('frame')
+
+        for i in self.cv2_gui.result_distance.keys():
+
+            # 抓出對應的顏色，並轉呈 matplotlib 的 RGB 0-1 格式
+            color = tuple([self.cv2_gui.colors[i][-j] / 255 for j in range(1, 4)])
+            if self.radioButton_strain.isChecked():
+                if self.radioButton_spline.isChecked():
+                    plt.plot([i for i in range(self.num_of_img)], gui_tool.lsq_spline_medain(self.cv2_gui.result_strain[i]), color=color)
+                elif self.radioButton_original.isChecked():
+                    plt.plot([i for i in range(self.num_of_img)], self.cv2_gui.result_strain[i], color=color)
+
+                plt.ylabel('Strain')
+                plt.title('Strain curve')
+
+            elif self.radioButton_distance.isChecked():
+                if self.radioButton_spline.isChecked():
+                    plt.plot([i for i in range(self.num_of_img)], gui_tool.lsq_spline_medain(self.cv2_gui.result_distance[i]), color=color)
+                elif self.radioButton_original.isChecked():
+                    plt.plot([i for i in range(self.num_of_img)], self.cv2_gui.result_distance[i], color=color)
+
+                plt.ylabel('Distance')
+                plt.title('Distance curve')
+
+        # TODO 改善顯示流程
+
+        plt.savefig(self.default_path + '/output.png')
+        plt.close()
+
+        # TODO 解決讀取中文路徑會出錯的問題
+        self.result_curve_temp = cv2.imread(self.default_path + '/output.png')
+        os.remove(self.default_path + '/output.png')
+
+        self.label_show_curve.setPixmap(QtGui.QPixmap(gui_tool.convert2qtimg(self.result_curve_temp)))
+        self.label_show_curve.setScaledContents(True)
+
+
 
     # TODO 待修正
     @pyqtSlot()
@@ -434,17 +459,12 @@ class My_MainWindow(QMainWindow, Ui_MainWindow):
         select_df = pd.DataFrame(self.cv2_gui.result_point)
         select_df.columns = ['Point {}'.format(i) for i in select_df.columns]
 
-
         if self.mode == 'line':
             for i, (d, s) in enumerate(zip(self.cv2_gui.result_distance.values(), self.cv2_gui.result_strain.values())):
                 select_df.insert(i * 4 + 2, 'Distance {} -> {}'.format(i * 2, i * 2 + 1), d)
                 select_df.insert(i * 4 + 3, 'Strain {} -> {}'.format(i * 2, i * 2 + 1), s)
 
-
-
         select_df.to_csv(path, index=True, sep=',')
-
-
 
         # 通知視窗
         msg = QMessageBox()
@@ -462,13 +482,37 @@ class My_MainWindow(QMainWindow, Ui_MainWindow):
             os.startfile(os.path.split(path)[0])
 
 
-    def radio_btn_change(self):
-        if self.radioButton_point.isChecked():
-            self.label_DRAW_DELAY.show()
-            self.spinBox_draw_delay.show()
+    def radio_btn_draw_change(self):
+        if self.radioButton_draw.isChecked():
+            self.label_DRAWING_DELAY.show()
+            self.spinBox_drawing_delay.show()
+
+            self.label_curve.hide()
+            self.label_optimize.hide()
+            self.radioButton_strain.hide()
+            self.radioButton_distance.hide()
+            self.radioButton_spline.hide()
+            self.radioButton_original.hide()
         else:
-            self.label_DRAW_DELAY.hide()
-            self.spinBox_draw_delay.hide()
+            self.label_DRAWING_DELAY.hide()
+            self.spinBox_drawing_delay.hide()
+
+            self.label_curve.show()
+            self.label_optimize.show()
+            self.radioButton_strain.show()
+            self.radioButton_distance.show()
+            self.radioButton_spline.show()
+            self.radioButton_original.show()
+
+
+    def radio_btn_curve_change(self):
+        if not self.filename or not self.cv2_gui:
+            return
+
+        if self.mode == 'line':
+            self.plot_strain_curve()
+
+
 
 
     # 更改
