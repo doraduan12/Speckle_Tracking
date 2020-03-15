@@ -12,8 +12,6 @@ from tools import Cv2Tools
 
 cv2_tool = Cv2Tools()
 
-delay_time = 1000
-
 class Cv2Line():
 
     def __init__(self, imgs:np, delta_x: float, delta_y: float, window_name: str,
@@ -313,19 +311,10 @@ class Cv2Line():
             d_list = np.asarray(self.result_distance[i])
             self.result_strain[i] = list((d_list - d_list[0]) / d_list[0])
 
-
     def show_progress_bar(self, img, fraction, denominator):
         temp_img = cv2.line(np.copy(img), (0, self.h - 1), (((self.w - 1) * fraction)//denominator, self.h - 1), (216, 202, 28), 5)
         cv2.imshow(self.window_name, temp_img)
         cv2.waitKey(1)
-
-
-
-
-
-
-
-
 
 
 

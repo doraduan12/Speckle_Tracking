@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>809</width>
-    <height>870</height>
+    <width>803</width>
+    <height>863</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -902,84 +902,6 @@
       <string>Show process</string>
      </property>
     </widget>
-    <widget class="QWidget" name="horizontalLayoutWidget_4">
-     <property name="geometry">
-      <rect>
-       <x>10</x>
-       <y>110</y>
-       <width>271</width>
-       <height>31</height>
-      </rect>
-     </property>
-     <layout class="QHBoxLayout" name="horizontalLayout_curve">
-      <item>
-       <widget class="QLabel" name="label_curve">
-        <property name="text">
-         <string>Curve |</string>
-        </property>
-        <property name="alignment">
-         <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <widget class="QRadioButton" name="radioButton_strain">
-        <property name="text">
-         <string>Strain</string>
-        </property>
-        <property name="checked">
-         <bool>true</bool>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <widget class="QRadioButton" name="radioButton_distance">
-        <property name="text">
-         <string>Distance</string>
-        </property>
-       </widget>
-      </item>
-     </layout>
-    </widget>
-    <widget class="QWidget" name="horizontalLayoutWidget_5">
-     <property name="geometry">
-      <rect>
-       <x>10</x>
-       <y>140</y>
-       <width>271</width>
-       <height>31</height>
-      </rect>
-     </property>
-     <layout class="QHBoxLayout" name="horizontalLayout_optimize">
-      <item>
-       <widget class="QLabel" name="label_optimize">
-        <property name="text">
-         <string>Optimize |</string>
-        </property>
-        <property name="alignment">
-         <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <widget class="QRadioButton" name="radioButton_spline">
-        <property name="text">
-         <string>Spline</string>
-        </property>
-        <property name="checked">
-         <bool>true</bool>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <widget class="QRadioButton" name="radioButton_original">
-        <property name="text">
-         <string>Original</string>
-        </property>
-       </widget>
-      </item>
-     </layout>
-    </widget>
     <widget class="QLabel" name="label_NULL">
      <property name="geometry">
       <rect>
@@ -1009,43 +931,144 @@
       <enum>Qt::Horizontal</enum>
      </property>
     </widget>
-    <widget class="QWidget" name="horizontalLayoutWidget_3">
+    <widget class="QStackedWidget" name="stackedWidget_mode">
      <property name="geometry">
       <rect>
        <x>10</x>
-       <y>110</y>
+       <y>100</y>
        <width>271</width>
-       <height>31</height>
+       <height>91</height>
       </rect>
      </property>
-     <layout class="QHBoxLayout" name="horizontalLayout_4">
-      <item>
-       <widget class="QLabel" name="label">
-        <property name="text">
-         <string/>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <widget class="QLabel" name="label_DRAWING_DELAY">
-        <property name="font">
-         <font>
-          <family>Calibri</family>
-          <pointsize>10</pointsize>
-         </font>
-        </property>
-        <property name="text">
-         <string>drawing delay | </string>
-        </property>
-        <property name="alignment">
-         <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <widget class="QSpinBox" name="spinBox_drawing_delay"/>
-      </item>
-     </layout>
+     <property name="currentIndex">
+      <number>0</number>
+     </property>
+     <widget class="QWidget" name="page">
+      <widget class="QWidget" name="horizontalLayoutWidget_4">
+       <property name="geometry">
+        <rect>
+         <x>0</x>
+         <y>10</y>
+         <width>271</width>
+         <height>31</height>
+        </rect>
+       </property>
+       <layout class="QHBoxLayout" name="horizontalLayout_curve">
+        <item>
+         <widget class="QLabel" name="label_curve">
+          <property name="text">
+           <string>Curve |</string>
+          </property>
+          <property name="alignment">
+           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QRadioButton" name="radioButton_strain">
+          <property name="text">
+           <string>Strain</string>
+          </property>
+          <property name="checked">
+           <bool>true</bool>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QRadioButton" name="radioButton_distance">
+          <property name="text">
+           <string>Distance</string>
+          </property>
+         </widget>
+        </item>
+       </layout>
+       <zorder>label_curve</zorder>
+       <zorder>radioButton_strain</zorder>
+       <zorder>radioButton_distance</zorder>
+      </widget>
+      <widget class="QWidget" name="horizontalLayoutWidget_5">
+       <property name="geometry">
+        <rect>
+         <x>0</x>
+         <y>40</y>
+         <width>271</width>
+         <height>31</height>
+        </rect>
+       </property>
+       <layout class="QHBoxLayout" name="horizontalLayout_optimize">
+        <item>
+         <widget class="QLabel" name="label_optimize">
+          <property name="text">
+           <string>Optimize |</string>
+          </property>
+          <property name="alignment">
+           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QRadioButton" name="radioButton_spline">
+          <property name="text">
+           <string>Spline</string>
+          </property>
+          <property name="checked">
+           <bool>true</bool>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QRadioButton" name="radioButton_original">
+          <property name="text">
+           <string>Original</string>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </widget>
+     </widget>
+     <widget class="QWidget" name="page_2">
+      <widget class="QWidget" name="horizontalLayoutWidget_3">
+       <property name="geometry">
+        <rect>
+         <x>0</x>
+         <y>10</y>
+         <width>271</width>
+         <height>31</height>
+        </rect>
+       </property>
+       <layout class="QHBoxLayout" name="horizontalLayout_4">
+        <item>
+         <widget class="QLabel" name="label">
+          <property name="text">
+           <string/>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QLabel" name="label_DRAWING_DELAY">
+          <property name="font">
+           <font>
+            <family>Calibri</family>
+            <pointsize>10</pointsize>
+           </font>
+          </property>
+          <property name="text">
+           <string>drawing delay | </string>
+          </property>
+          <property name="alignment">
+           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QSpinBox" name="spinBox_drawing_delay"/>
+        </item>
+       </layout>
+       <zorder>spinBox_drawing_delay</zorder>
+       <zorder>label_DRAWING_DELAY</zorder>
+       <zorder>label</zorder>
+      </widget>
+     </widget>
     </widget>
    </widget>
    <widget class="QGroupBox" name="groupBox_save">
@@ -1106,7 +1129,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>809</width>
+     <width>803</width>
      <height>25</height>
     </rect>
    </property>

@@ -74,9 +74,7 @@ class My_MainWindow(QMainWindow, Ui_MainWindow):
         self.btn_save_csv.clicked.connect(self.clicked_btn_ave_csv)
 
         #
-        self.label_DRAWING_DELAY.hide()
-        self.spinBox_drawing_delay.hide()
-        self.radioButton_draw.toggled.connect(self.radio_btn_draw_change)
+        self.radioButton_line.toggled.connect(self.radio_btn_line_change)
 
         #
         self.radioButton_spline.toggled.connect(self.radio_btn_curve_change)
@@ -482,27 +480,13 @@ class My_MainWindow(QMainWindow, Ui_MainWindow):
             os.startfile(os.path.split(path)[0])
 
 
-    def radio_btn_draw_change(self):
-        if self.radioButton_draw.isChecked():
-            self.label_DRAWING_DELAY.show()
-            self.spinBox_drawing_delay.show()
 
-            self.label_curve.hide()
-            self.label_optimize.hide()
-            self.radioButton_strain.hide()
-            self.radioButton_distance.hide()
-            self.radioButton_spline.hide()
-            self.radioButton_original.hide()
+    def radio_btn_line_change(self):
+        if self.radioButton_line.isChecked():
+            self.stackedWidget_mode.setCurrentIndex(0)
         else:
-            self.label_DRAWING_DELAY.hide()
-            self.spinBox_drawing_delay.hide()
+            self.stackedWidget_mode.setCurrentIndex(1)
 
-            self.label_curve.show()
-            self.label_optimize.show()
-            self.radioButton_strain.show()
-            self.radioButton_distance.show()
-            self.radioButton_spline.show()
-            self.radioButton_original.show()
 
 
     def radio_btn_curve_change(self):
