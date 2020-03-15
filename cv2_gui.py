@@ -30,7 +30,6 @@ class Cv2Line():
 
         print("The shape of dicom is :", self.IMGS.shape)
 
-        self.IMGS = cv2_tool.add_page(self.IMGS)
         self.IMGS_GRAY = np.asarray([cv2.cvtColor(img, cv2.COLOR_BGR2GRAY) for img in self.IMGS])
 
         self.img_label = np.copy(self.IMGS)
@@ -341,7 +340,6 @@ class Cv2Point():
 
         print("The shape of dicom is :", self.IMGS.shape)
 
-        self.IMGS = cv2_tool.add_page(self.IMGS)
         self.IMGS_GRAY = np.asarray([cv2.cvtColor(img, cv2.COLOR_BGR2GRAY) for img in self.IMGS])
 
         self.img_label = np.copy(self.IMGS)

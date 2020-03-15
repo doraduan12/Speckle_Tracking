@@ -51,6 +51,7 @@ class My_MainWindow(QMainWindow, Ui_MainWindow):
         self.filename = ''
         self.cv2_gui = ''
         self.mode = ''
+        self.result_curve_temp = ''
 
         # 按下 選路徑(btn_path) 按鈕
         self.btn_browse.clicked.connect(self.clicked_btn_path)
@@ -71,12 +72,13 @@ class My_MainWindow(QMainWindow, Ui_MainWindow):
         # SAVE 相關
         # 按下儲存結果
         self.btn_save_result.clicked.connect(self.clicked_btn_save_result)
-        self.btn_save_csv.clicked.connect(self.clicked_btn_ave_csv)
+        self.btn_save_csv.clicked.connect(self.clicked_btn_save_csv)
+        self.btn_save_curve.clicked.connect(self.clicked_btn_save_curve)
 
-        #
+        # mode 切換
         self.radioButton_line.toggled.connect(self.radio_btn_line_change)
 
-        #
+        # mode == line 中的 方法切換
         self.radioButton_spline.toggled.connect(self.radio_btn_curve_change)
         self.radioButton_strain.toggled.connect(self.radio_btn_curve_change)
 
@@ -84,7 +86,6 @@ class My_MainWindow(QMainWindow, Ui_MainWindow):
     # 按下 選路徑(btn_path) 按鈕的動作
     @pyqtSlot()
     def clicked_btn_path(self):
-        # files, filetype = QFileDialog.getOpenFileNames(self, "選取資料夾").replace('/', '\\')     # 開啟選取檔案的視窗
         files, filetype = QFileDialog.getOpenFileNames(self,  "選擇文件", '../dicom/', # 起始路径
                                                        "All Files (*);;Dicom Files (*.dcm);;Png Files (*.png);;JPEG Files (*.jpeg)")
 
@@ -101,7 +102,7 @@ class My_MainWindow(QMainWindow, Ui_MainWindow):
                 self.filename = os.path.splitext(os.path.split(file)[-1])[0]
 
                 dicom = pydicom.read_file(file)
-                self.IMGS = dicom.pixel_array
+                self.IMGS = gui_tool.add_page(dicom.pixel_array)
                 self.img_preview = self.IMGS[0]
                 self.num_of_img, self.h, self.w = self.IMGS.shape[:3]
 
@@ -156,7 +157,6 @@ class My_MainWindow(QMainWindow, Ui_MainWindow):
                     self.FPS = 20
 
 
-
             # 如果讀到圖檔
             elif extension == '.png' or extension =='.jpg' or extension == '.jpeg':
                 browse_path = os.path.split(files[0])[0]
@@ -171,7 +171,7 @@ class My_MainWindow(QMainWindow, Ui_MainWindow):
                 temp = np.asarray([int(file.split('.')[0].split('/')[-1]) for file in files])
                 temp = np.argsort(temp)
                 files = files[temp]
-                self.IMGS = np.asarray([cv2.imread(file) for file in files])
+                self.IMGS = gui_tool.add_page(np.asarray([cv2.imread(file) for file in files]))
                 self.img_preview = self.IMGS[0]
                 self.num_of_img, self.h, self.w = self.IMGS.shape[:3]
 
@@ -442,11 +442,10 @@ class My_MainWindow(QMainWindow, Ui_MainWindow):
 
 
     # 儲存成 CSV 檔案
-    def clicked_btn_ave_csv(self):
+    def clicked_btn_save_csv(self):
         # 如果尚未選擇影像，或是尚未運行 cv2，不運行按鈕
         if not self.filename or not self.cv2_gui:
             return
-        print(self.cv2_gui.result_point)
         path, filetype = QFileDialog.getSaveFileName(self, "文件保存", self.default_path + '/' + self.default_filename + '.csv', "All Files (*);;CSV Files (*.csv)")
 
         # 如果沒有選擇存檔路徑，結束 function
@@ -478,6 +477,39 @@ class My_MainWindow(QMainWindow, Ui_MainWindow):
         # 如果選擇開啟資料夾，則運行
         if reply == 0:
             os.startfile(os.path.split(path)[0])
+
+    # 如果要儲存 Curve
+    def clicked_btn_save_curve(self):
+        # 如果尚未選擇影像，或是尚未運行 cv2，不運行按鈕，或是不是畫線模式（沒有 curve）
+        if not self.filename or not self.cv2_gui:
+            return
+
+        path, filetype = QFileDialog.getSaveFileName(self, "文件保存", self.default_path + '/' + self.default_filename + '.png', "All Files (*);;PNG Files (*.png)")
+
+        # 如果沒有選擇存檔路徑，結束 function
+        if not path:
+            return
+
+        try:
+            cv2.imwrite(path, self.result_curve_temp)
+
+            # 通知視窗
+            msg = QMessageBox()
+            msg.setWindowTitle('Save completed.')
+            msg.setIcon(QMessageBox.Information)
+            msg.setText('Result saved finish.\n')
+
+            Open = msg.addButton('Show in explorer', QMessageBox.AcceptRole)
+            Ok = msg.addButton('OK', QMessageBox.DestructiveRole)
+            msg.setDefaultButton(Ok)
+            reply = msg.exec()
+
+            # 如果選擇開啟資料夾，則運行
+            if reply == 0:
+                os.startfile(os.path.split(path)[0])
+        except:
+            return
+
 
 
 
@@ -530,10 +562,6 @@ class My_MainWindow(QMainWindow, Ui_MainWindow):
     def spinBox_search_changed(self, x):
         self.default_search = x
         self.show_preview_img(np.copy(self.img_preview), self.default_template, self.default_search)
-
-
-
-
 
 
 

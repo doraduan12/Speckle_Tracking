@@ -16,6 +16,14 @@ class GuiTools():
               76: 'line', 108: 'line', 83: 'speckle', 115: 'speckle',
               32: 'space', 77: 'median filter', 109: 'median filter'}
 
+    # 將 Dcm 檔影像加上圖片編號
+    def add_page(self, imgs: np) -> np:
+        for i in range(len(imgs)):
+            s = str(i) + '/' + str(len(imgs) - 1)
+            font = cv2.FONT_HERSHEY_SIMPLEX
+            cv2.putText(imgs[i], s, (0, 15), font, .5, (255, 255, 255), 2)
+        return imgs
+
     # 查詢按鍵指令
     def find_action(self, key: int) -> str:
         # if key != -1:print(key)
@@ -71,13 +79,7 @@ class GuiTools():
 
 class Cv2Tools():
 
-    # 將 Dcm 檔影像加上圖片編號
-    def add_page(self, imgs: np) -> np:
-        for i in range(len(imgs)):
-            s = str(i) + '/' + str(len(imgs) - 1)
-            font = cv2.FONT_HERSHEY_SIMPLEX
-            cv2.putText(imgs[i], s, (0, 15), font, .5, (255, 255, 255), 2)
-        return imgs
+
 
     # 影像切換
     def photo_switch(self, switch:str, page:int, max:int) -> int:
