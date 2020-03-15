@@ -231,7 +231,7 @@ class My_MainWindow(QMainWindow, Ui_MainWindow):
             self.spinBox_search_range.setRange(1, self.h//2)
 
             # 預設的 draw delay
-            self.default_draw_delay = 10
+            self.default_draw_delay = 20
             self.spinBox_drawing_delay.setValue(self.default_draw_delay)
             self.spinBox_drawing_delay.setRange(1, 100)
 
@@ -511,8 +511,6 @@ class My_MainWindow(QMainWindow, Ui_MainWindow):
 
         if self.mode == 'line':
             self.plot_strain_curve()
-
-
 
 
     # 更改

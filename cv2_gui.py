@@ -263,6 +263,9 @@ class Cv2Line():
     # 畫線的 Speckle Tracking
     def tracking(self, show=False):
         finish_already = True
+
+        progress_denominator = (len(self.track_done) - np.sum(np.asarray(self.track_done))) * (len(self.IMGS) - 1)
+        progress_fraction = 0
         for j, (tp, s_shift, done) in enumerate(zip(self.target_point, self.search_shift, self.track_done)):
 
             # 如果該點完成，跳過該點
@@ -272,15 +275,15 @@ class Cv2Line():
             self.track_done[j] = True
             self.result_point[j] = [tp]
 
-
             color = self.colors[(j//2) % self.num_of_color]
 
-            print('Now is tracking point{}.'.format(j + 1))
+            print('Now is tracking point{}/{}.'.format(j + 1, len(self.target_point)))
 
             result = tp
 
             # 從圖1開始抓出，當作 Candidate
             for i in range(1, self.num_of_img):
+                progress_fraction += 1
                 # target, img1, img2, search_shift, temp_size
                 result = self.speckle_tracking.full(result, self.IMGS_GRAY[i-1], self.IMGS_GRAY[i], s_shift, self.temp_size)
                 self.result_point[j].append(result)
@@ -298,12 +301,10 @@ class Cv2Line():
                     cv2.putText(self.img_label[i], '{:4.3f}'.format(d), text_point, cv2.FONT_HERSHEY_SIMPLEX, .5, (255, 255, 255), 1)
                     self.result_distance[j//2].append(d)
 
-
-
-
                 if show:
-                    cv2.imshow(self.window_name, self.img_label[i])
-                    cv2.waitKey(1)
+                    self.show_progress_bar(self.img_label[i], progress_fraction, progress_denominator)
+
+            self.show_progress_bar(np.copy(self.img_label[0]), progress_fraction, progress_denominator)
 
         cv2.imshow(self.window_name, self.img_label[0])
         cv2.waitKey(1)
@@ -311,6 +312,24 @@ class Cv2Line():
         for i in self.result_distance.keys():
             d_list = np.asarray(self.result_distance[i])
             self.result_strain[i] = list((d_list - d_list[0]) / d_list[0])
+
+
+    def show_progress_bar(self, img, fraction, denominator):
+        temp_img = cv2.line(np.copy(img), (0, self.h - 1), (((self.w - 1) * fraction)//denominator, self.h - 1), (216, 202, 28), 5)
+        cv2.imshow(self.window_name, temp_img)
+        cv2.waitKey(1)
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 class Cv2Point():
@@ -447,11 +466,13 @@ class Cv2Point():
         cv2.waitKey(1)
 
 
-    # TODO point tracking
     # 畫線的 Speckle Tracking
     def tracking(self, show=False):
         finish_already = True
         search_shift = (self.default_search//2, self.default_search//2)
+
+        progress_denominator = (len(self.track_done) - np.sum(np.asarray(self.track_done))) * (len(self.IMGS) - 1)
+        progress_fraction = 0
         for j, (tp, done) in enumerate(zip(self.target_point, self.track_done)):
 
             # 如果該點完成，跳過該點
@@ -467,20 +488,26 @@ class Cv2Point():
 
             # 從圖1開始抓出，當作 Candidate
             for i in range(1, self.num_of_img):
+                progress_fraction += 1
                 # target, img1, img2, search_shift, temp_size
                 result = self.speckle_tracking.full(result, self.IMGS_GRAY[i-1], self.IMGS_GRAY[i], search_shift, self.temp_size)
                 self.result_point[j].append(result)
                 cv2.circle(self.img_label[i], result, 1, (0, 0, 255), thickness=-1)
 
                 if show:
-                    cv2.imshow(self.window_name, self.img_label[i])
-                    cv2.waitKey(1)
+                    # 進度條模式顯示
+                    self.show_progress_bar(self.img_label[i], progress_fraction, progress_denominator)
+
+            self.show_progress_bar(np.copy(self.img_label[0]), progress_fraction, progress_denominator)
 
         cv2.imshow(self.window_name, self.img_label[0])
         cv2.waitKey(1)
 
 
-
+    def show_progress_bar(self, img, fraction, denominator):
+        temp_img = cv2.line(np.copy(img), (0, self.h - 1), (((self.w - 1) * fraction)//denominator, self.h - 1), (216, 202, 28), 5)
+        cv2.imshow(self.window_name, temp_img)
+        cv2.waitKey(1)
 
 
 if __name__ == '__main__':
