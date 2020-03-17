@@ -6,12 +6,18 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>803</width>
-    <height>863</height>
+    <width>812</width>
+    <height>860</height>
    </rect>
   </property>
   <property name="windowTitle">
-   <string>MainWindow</string>
+   <string>Speckle Tracking Tool</string>
+  </property>
+  <property name="iconSize">
+   <size>
+    <width>32</width>
+    <height>32</height>
+   </size>
   </property>
   <widget class="QWidget" name="centralwidget">
    <widget class="QPushButton" name="btn_browse">
@@ -982,9 +988,6 @@
          </widget>
         </item>
        </layout>
-       <zorder>label_curve</zorder>
-       <zorder>radioButton_strain</zorder>
-       <zorder>radioButton_distance</zorder>
       </widget>
       <widget class="QWidget" name="horizontalLayoutWidget_5">
        <property name="geometry">
@@ -1136,11 +1139,32 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>803</width>
+     <width>812</width>
      <height>25</height>
     </rect>
    </property>
+   <widget class="QMenu" name="menuFile">
+    <property name="title">
+     <string>File</string>
+    </property>
+    <addaction name="action_save_all_result"/>
+    <addaction name="action_version"/>
+   </widget>
+   <addaction name="menuFile"/>
   </widget>
+  <action name="action_save_all_result">
+   <property name="text">
+    <string>Save all result</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+S</string>
+   </property>
+  </action>
+  <action name="action_version">
+   <property name="text">
+    <string>Version</string>
+   </property>
+  </action>
  </widget>
  <resources/>
  <connections/>

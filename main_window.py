@@ -13,7 +13,8 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
         MainWindow.setObjectName("MainWindow")
-        MainWindow.resize(803, 863)
+        MainWindow.resize(812, 860)
+        MainWindow.setIconSize(QtCore.QSize(32, 32))
         self.centralwidget = QtWidgets.QWidget(MainWindow)
         self.centralwidget.setObjectName("centralwidget")
         self.btn_browse = QtWidgets.QPushButton(self.centralwidget)
@@ -385,9 +386,6 @@ class Ui_MainWindow(object):
         self.radioButton_distance = QtWidgets.QRadioButton(self.horizontalLayoutWidget_4)
         self.radioButton_distance.setObjectName("radioButton_distance")
         self.horizontalLayout_curve.addWidget(self.radioButton_distance)
-        self.label_curve.raise_()
-        self.radioButton_strain.raise_()
-        self.radioButton_distance.raise_()
         self.horizontalLayoutWidget_5 = QtWidgets.QWidget(self.page)
         self.horizontalLayoutWidget_5.setGeometry(QtCore.QRect(0, 40, 271, 31))
         self.horizontalLayoutWidget_5.setObjectName("horizontalLayoutWidget_5")
@@ -464,9 +462,18 @@ class Ui_MainWindow(object):
         self.statusbar.setObjectName("statusbar")
         MainWindow.setStatusBar(self.statusbar)
         self.menubar = QtWidgets.QMenuBar(MainWindow)
-        self.menubar.setGeometry(QtCore.QRect(0, 0, 803, 25))
+        self.menubar.setGeometry(QtCore.QRect(0, 0, 812, 25))
         self.menubar.setObjectName("menubar")
+        self.menuFile = QtWidgets.QMenu(self.menubar)
+        self.menuFile.setObjectName("menuFile")
         MainWindow.setMenuBar(self.menubar)
+        self.action_save_all_result = QtWidgets.QAction(MainWindow)
+        self.action_save_all_result.setObjectName("action_save_all_result")
+        self.action_version = QtWidgets.QAction(MainWindow)
+        self.action_version.setObjectName("action_version")
+        self.menuFile.addAction(self.action_save_all_result)
+        self.menuFile.addAction(self.action_version)
+        self.menubar.addAction(self.menuFile.menuAction())
 
         self.retranslateUi(MainWindow)
         self.stackedWidget_mode.setCurrentIndex(0)
@@ -474,7 +481,7 @@ class Ui_MainWindow(object):
 
     def retranslateUi(self, MainWindow):
         _translate = QtCore.QCoreApplication.translate
-        MainWindow.setWindowTitle(_translate("MainWindow", "MainWindow"))
+        MainWindow.setWindowTitle(_translate("MainWindow", "Speckle Tracking Tool"))
         self.btn_browse.setText(_translate("MainWindow", "Browse"))
         self.groupBox_filedetail.setTitle(_translate("MainWindow", "File Detail"))
         self.label_image_size.setText(_translate("MainWindow", "Image size :"))
@@ -519,6 +526,10 @@ class Ui_MainWindow(object):
         self.btn_save_result.setText(_translate("MainWindow", "Result.mp4"))
         self.btn_save_csv.setText(_translate("MainWindow", "Result.csv"))
         self.btn_save_curve.setText(_translate("MainWindow", "Curve.png"))
+        self.menuFile.setTitle(_translate("MainWindow", "File"))
+        self.action_save_all_result.setText(_translate("MainWindow", "Save all result"))
+        self.action_save_all_result.setShortcut(_translate("MainWindow", "Ctrl+S"))
+        self.action_version.setText(_translate("MainWindow", "Version"))
 
 
 if __name__ == "__main__":

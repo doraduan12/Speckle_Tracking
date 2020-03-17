@@ -32,7 +32,7 @@ cgitb.enable( format = 'text')
 3. 加上選擇頁數，在下星期一報告
 '''
 
-
+import img.iconQrc
 
 # TODO 顏色轉換
 # TODO 重製 temp 與 search 按鈕
@@ -43,7 +43,11 @@ cgitb.enable( format = 'text')
 class My_MainWindow(QMainWindow, Ui_MainWindow):
     def __init__(self):
         super().__init__()
+
         self.setupUi(self)
+        # add icon https://www.jianshu.com/p/c1e75244b6f3,
+        # https://typecoder.blogspot.com/2018/04/pyqt-pyinstallerwinicon.html
+        self.setWindowIcon(QtGui.QIcon(':/icon.png'))
 
         # 先將顏色功能藏起來
         self.btn_color.hide()
@@ -58,6 +62,7 @@ class My_MainWindow(QMainWindow, Ui_MainWindow):
         self.cv2_gui = ''
         self.mode = ''
         self.result_curve_temp = ''
+        self.default_path = 'D:/'
 
         # 按下 選路徑(btn_path) 按鈕
         self.btn_browse.clicked.connect(self.clicked_btn_path)
@@ -88,11 +93,14 @@ class My_MainWindow(QMainWindow, Ui_MainWindow):
         self.radioButton_spline.toggled.connect(self.radio_btn_curve_change)
         self.radioButton_strain.toggled.connect(self.radio_btn_curve_change)
 
+        # 按下全部儲存
+        self.action_save_all_result.triggered.connect(self.action_save_triggered)
+
 
     # 按下 選路徑(btn_path) 按鈕的動作
     @pyqtSlot()
     def clicked_btn_path(self):
-        files, filetype = QFileDialog.getOpenFileNames(self,  "選擇文件", '../dicom/', # 起始路径
+        files, filetype = QFileDialog.getOpenFileNames(self,  "選擇文件", self.default_path, # 起始路径
                                                        "All Files (*);;Dicom Files (*.dcm);;Png Files (*.png);;JPEG Files (*.jpeg)")
 
 
@@ -499,25 +507,80 @@ class My_MainWindow(QMainWindow, Ui_MainWindow):
         if not path:
             return
 
-        try:
-            cv2.imwrite(path, self.result_curve_temp)
+        # 解決中文路徑問題
+        cv2.imencode('.png', self.result_curve_temp)[1].tofile(path)
+        # cv2.imwrite(path, self.result_curve_temp)
 
-            # 通知視窗
-            msg = QMessageBox()
-            msg.setWindowTitle('Save completed.')
-            msg.setIcon(QMessageBox.Information)
-            msg.setText('Result saved finish.\n')
+        # 通知視窗
+        msg = QMessageBox()
+        msg.setWindowTitle('Save completed.')
+        msg.setIcon(QMessageBox.Information)
+        msg.setText('Result saved finish.\n')
 
-            Open = msg.addButton('Show in explorer', QMessageBox.AcceptRole)
-            Ok = msg.addButton('OK', QMessageBox.DestructiveRole)
-            msg.setDefaultButton(Ok)
-            reply = msg.exec()
+        Open = msg.addButton('Show in explorer', QMessageBox.AcceptRole)
+        Ok = msg.addButton('OK', QMessageBox.DestructiveRole)
+        msg.setDefaultButton(Ok)
+        reply = msg.exec()
 
-            # 如果選擇開啟資料夾，則運行
-            if reply == 0:
-                os.startfile(os.path.split(path)[0])
-        except:
+        # 如果選擇開啟資料夾，則運行
+        if reply == 0:
+            os.startfile(os.path.split(path)[0])
+
+
+    # 儲存所有結果
+    def action_save_triggered(self):
+        if not self.filename or not self.cv2_gui:
             return
+
+        path, filetype = QFileDialog.getSaveFileName(self, "文件保存", self.default_path + '/' + self.default_filename + '.all', "All Files (*)")
+
+        # 如果沒有選擇存檔路徑，結束 function
+        if not path:
+            return
+
+        if path.split('.')[-1] == 'all':
+            path = path.split('.')[0]
+
+        # 儲存 mp4
+        fourcc = cv2.VideoWriter_fourcc('m', 'p', '4', 'v')
+        videowriter = cv2.VideoWriter(path + '.mp4', fourcc, self.FPS, (self.w, self.h))
+
+        for img in self.cv2_gui.img_label:
+            videowriter.write(img)
+        videowriter.release()
+
+
+        # 儲存 csv
+        select_df = pd.DataFrame(self.cv2_gui.result_point)
+        select_df.columns = ['Point {}'.format(i) for i in select_df.columns]
+
+        if self.mode == 'line':
+            for i, (d, s) in enumerate(
+                    zip(self.cv2_gui.result_distance.values(), self.cv2_gui.result_strain.values())):
+                select_df.insert(i * 4 + 2, 'Distance {} -> {}'.format(i * 2, i * 2 + 1), d)
+                select_df.insert(i * 4 + 3, 'Strain {} -> {}'.format(i * 2, i * 2 + 1), s)
+
+            # 儲存 curve
+            cv2.imencode('.png', self.result_curve_temp)[1].tofile(path+'.png')
+
+        select_df.to_csv(path + '.csv', index=True, sep=',')
+
+
+        # 通知視窗
+        msg = QMessageBox()
+        msg.setWindowTitle('Save completed.')
+        msg.setIcon(QMessageBox.Information)
+        msg.setText('Result saved finish.\n')
+
+        Open = msg.addButton('Show in explorer', QMessageBox.AcceptRole)
+        Ok = msg.addButton('OK', QMessageBox.DestructiveRole)
+        msg.setDefaultButton(Ok)
+        reply = msg.exec()
+
+        # 如果選擇開啟資料夾，則運行
+        if reply == 0:
+            os.startfile(os.path.split(path)[0])
+
 
 
 
