@@ -4,9 +4,6 @@ import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
 import matplotlib
-matplotlib.use("Qt5Agg")  # 声明使用QT5
-from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
-from matplotlib.figure import Figure
 
 import sys
 import os
@@ -26,6 +23,16 @@ gui_tool = GuiTools()
 import cgitb
 cgitb.enable( format = 'text')
 
+'''
+20200316 meeting
+
+1. 把線段的 dx, dy 分量顯示出來（除了直接運算 distance，還要還原原本的 dx, dy）
+2. 星期五高教計畫將操作流程、簡介報告出來
+
+3. 加上選擇頁數，在下星期一報告
+'''
+
+
 
 # TODO 顏色轉換
 # TODO 重製 temp 與 search 按鈕
@@ -40,7 +47,6 @@ class My_MainWindow(QMainWindow, Ui_MainWindow):
 
         # 先將顏色功能藏起來
         self.btn_color.hide()
-
 
         self.setup()
 
@@ -88,6 +94,7 @@ class My_MainWindow(QMainWindow, Ui_MainWindow):
     def clicked_btn_path(self):
         files, filetype = QFileDialog.getOpenFileNames(self,  "選擇文件", '../dicom/', # 起始路径
                                                        "All Files (*);;Dicom Files (*.dcm);;Png Files (*.png);;JPEG Files (*.jpeg)")
+
 
         if len(files) > 0:
             # 副檔名
@@ -374,11 +381,13 @@ class My_MainWindow(QMainWindow, Ui_MainWindow):
 
         # TODO 改善顯示流程
 
+
         plt.savefig(self.default_path + '/output.png')
         plt.close()
 
         # TODO 解決讀取中文路徑會出錯的問題
-        self.result_curve_temp = cv2.imread(self.default_path + '/output.png')
+        self.result_curve_temp = cv2.imdecode(np.fromfile(self.default_path + '/output.png', dtype=np.uint8), -1)   # 解決中文路徑問題
+        # self.result_curve_temp = cv2.imread(self.default_path + '/output.png') # 中文路徑會報錯
         os.remove(self.default_path + '/output.png')
 
         self.label_show_curve.setPixmap(QtGui.QPixmap(gui_tool.convert2qtimg(self.result_curve_temp)))
