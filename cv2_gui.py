@@ -26,7 +26,10 @@ class Cv2Line():
 
         self.delta_x = delta_x
         self.delta_y = delta_y
-        self.delta = np.array([self.delta_x, self.delta_y])
+        if self.delta_x == 0 or self.delta_y == 0:
+            self.delta = np.array([1, 1])
+        else:
+            self.delta = np.array([self.delta_x, self.delta_y])
 
         print("The shape of dicom is :", self.IMGS.shape)
 
@@ -122,7 +125,7 @@ class Cv2Line():
             # 計算距離、顯示距離的座標
             text_point, d = cv2_tool.count_distance(self.point1, (x, y), self.delta)
             font = cv2.FONT_HERSHEY_SIMPLEX
-            cv2.putText(temp_img, '{:4.3f}'.format(d), text_point, font, .5, (255, 255, 255), 1)
+            cv2.putText(temp_img, '{:4.3f}{}'.format(d, '(p)' if self.delta_x == 0 else ''), text_point, font, .5, (255, 255, 255), 1)
 
             # 刷新畫面
             cv2.imshow(self.window_name, temp_img)
@@ -143,7 +146,7 @@ class Cv2Line():
                 # 計算距離 -> 尚未加入 List
                 text_point, d = cv2_tool.count_distance(self.point1, self.point2, self.delta)
                 font = cv2.FONT_HERSHEY_SIMPLEX
-                cv2.putText(self.img_label[self.current_page], '{:4.3f}'.format(d), text_point, font, .5,
+                cv2.putText(self.img_label[self.current_page], '{:4.3f}{}'.format(d, '(p)' if self.delta_x == 0 else ''), text_point, font, .5,
                             (255, 255, 255), 1)
 
                 # 新增點參數
@@ -233,7 +236,7 @@ class Cv2Line():
         # 計算距離 -> 尚未加入 List TODO
         text_point, d = cv2_tool.count_distance(point1, point2, self.delta)
         font = cv2.FONT_HERSHEY_SIMPLEX
-        cv2.putText(self.img_label[self.current_page], '{:4.3f}'.format(d), text_point, font, .5,
+        cv2.putText(self.img_label[self.current_page], '{:4.3f}{}'.format(d, '(p)' if self.delta_x == 0 else ''), text_point, font, .5,
                     (255, 255, 255), 1)
 
         # 新增點參數
@@ -295,7 +298,7 @@ class Cv2Line():
                     # 畫線、計算（顯示）距離
                     cv2.line(self.img_label[i], p_last, result, color, thickness=1)
                     text_point, d = cv2_tool.count_distance(p_last, result, self.delta)
-                    cv2.putText(self.img_label[i], '{:4.3f}'.format(d), text_point, cv2.FONT_HERSHEY_SIMPLEX, .5, (255, 255, 255), 1)
+                    cv2.putText(self.img_label[i], '{:4.3f}{}'.format(d, '(p)' if self.delta_x == 0 else ''), text_point, cv2.FONT_HERSHEY_SIMPLEX, .5, (255, 255, 255), 1)
                     self.result_distance[j//2].append(d)
 
                 if show:

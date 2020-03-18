@@ -15,7 +15,6 @@ from PyQt5.QtCore import pyqtSlot
 from PyQt5.QtWidgets import QFileDialog, QMainWindow, QMessageBox
 from main_window import Ui_MainWindow
 
-
 from cv2_gui import *
 from tools import GuiTools
 gui_tool = GuiTools()
@@ -95,6 +94,9 @@ class My_MainWindow(QMainWindow, Ui_MainWindow):
 
         # 按下全部儲存
         self.action_save_all_result.triggered.connect(self.action_save_triggered)
+
+        # 按下軟體資訊
+        self.action_version.triggered.connect(self.action_soft_information)
 
 
     # 按下 選路徑(btn_path) 按鈕的動作
@@ -582,6 +584,16 @@ class My_MainWindow(QMainWindow, Ui_MainWindow):
             os.startfile(os.path.split(path)[0])
 
 
+    def action_soft_information(self):
+        msg = QMessageBox()
+        msg.setWindowTitle('Software Information')
+        msg.setWindowIcon(QtGui.QIcon(':/icon.png'))
+        msg.setText(
+            'Author: Yuwen Huang\n\n' +
+            'Latest Update: 20200318\n\n' +
+            'Website: https://github.com/Yuwen0810/Speckle_Tracking\n'
+        )
+        reply = msg.exec()
 
 
 
