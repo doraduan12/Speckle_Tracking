@@ -66,7 +66,7 @@ class My_MainWindow(QMainWindow, Ui_MainWindow):
         # 按下 選路徑(btn_path) 按鈕
         self.btn_browse.clicked.connect(self.clicked_btn_path)
 
-        # 設定更新 spinbox 的動作
+        # 設定更新 Window spinbox 的動作
         self.spinBox_temp_size.valueChanged.connect(self.spinBox_temp_changed)
         self.spinBox_search_range.valueChanged.connect(self.spinBox_search_changed)
 
@@ -97,6 +97,12 @@ class My_MainWindow(QMainWindow, Ui_MainWindow):
 
         # 按下軟體資訊
         self.action_version.triggered.connect(self.action_soft_information)
+
+        # 設定更新頁數的 spinbox 動作
+        self.spinBox_start.valueChanged.connect(self.spinBox_start_change)
+        self.spinBox_end.valueChanged.connect(self.spinBox_end_change)
+
+
 
 
     # 按下 選路徑(btn_path) 按鈕的動作
@@ -254,6 +260,12 @@ class My_MainWindow(QMainWindow, Ui_MainWindow):
             # 建立預覽圖片、自適化調整
             self.show_preview_img(np.copy(self.img_preview), self.default_template, self.default_search)
 
+            # 預設上下限與初始頁數
+            self.spinBox_start.setRange(0, self.num_of_img-1)
+            self.spinBox_end.setRange(0, self.num_of_img-1)
+            self.spinBox_start.setValue(0)
+            self.spinBox_end.setValue(self.num_of_img-1)
+
 
 
         # 如果沒有選擇檔案的話
@@ -278,6 +290,11 @@ class My_MainWindow(QMainWindow, Ui_MainWindow):
         self.label_show_curve.setPixmap(QtGui.QPixmap(""))
 
 
+        # 紀錄設定的開始與結束頁
+        self.start = self.spinBox_start.value()
+        self.end = self.spinBox_end.value() + 1
+
+
         # 判斷模式
         if self.radioButton_line.isChecked():
             mode = 'line'
@@ -292,7 +309,7 @@ class My_MainWindow(QMainWindow, Ui_MainWindow):
 
 
         kwargs = {
-            'imgs': self.IMGS,
+            'imgs': self.IMGS[self.start:self.end:,:,:],
             'window_name': self.filename,
             'delta_x': float(self.doubleSpinBox_delta_x.value())/1000,
             'delta_y': float(self.doubleSpinBox_delta_y.value())/1000,
@@ -374,18 +391,18 @@ class My_MainWindow(QMainWindow, Ui_MainWindow):
             color = tuple([self.cv2_gui.colors[i][-j] / 255 for j in range(1, 4)])
             if self.radioButton_strain.isChecked():
                 if self.radioButton_spline.isChecked():
-                    plt.plot([i for i in range(self.num_of_img)], gui_tool.lsq_spline_medain(self.cv2_gui.result_strain[i]), color=color)
+                    plt.plot([i for i in range(self.start, self.end)], gui_tool.lsq_spline_medain(self.cv2_gui.result_strain[i]), color=color)
                 elif self.radioButton_original.isChecked():
-                    plt.plot([i for i in range(self.num_of_img)], self.cv2_gui.result_strain[i], color=color)
+                    plt.plot([i for i in range(self.start, self.end)], self.cv2_gui.result_strain[i], color=color)
 
                 plt.ylabel('Strain')
                 plt.title('Strain curve')
 
             elif self.radioButton_distance.isChecked():
                 if self.radioButton_spline.isChecked():
-                    plt.plot([i for i in range(self.num_of_img)], gui_tool.lsq_spline_medain(self.cv2_gui.result_distance[i]), color=color)
+                    plt.plot([i for i in range(self.start, self.end)], gui_tool.lsq_spline_medain(self.cv2_gui.result_distance[i]), color=color)
                 elif self.radioButton_original.isChecked():
-                    plt.plot([i for i in range(self.num_of_img)], self.cv2_gui.result_distance[i], color=color)
+                    plt.plot([i for i in range(self.start, self.end)], self.cv2_gui.result_distance[i], color=color)
 
                 plt.ylabel('Distance')
                 plt.title('Distance curve')
@@ -649,6 +666,11 @@ class My_MainWindow(QMainWindow, Ui_MainWindow):
         self.show_preview_img(np.copy(self.img_preview), self.default_template, self.default_search)
 
 
+    def spinBox_start_change(self, x):
+        self.show_preview_img(np.copy(self.IMGS[x]), self.default_template, self.default_search)
+
+    def spinBox_end_change(self, x):
+        self.show_preview_img(np.copy(self.IMGS[x]), self.default_template, self.default_search)
 
 
 if __name__ == "__main__":
