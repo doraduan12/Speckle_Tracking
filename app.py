@@ -188,7 +188,8 @@ class My_MainWindow(QMainWindow, Ui_MainWindow):
                 temp = np.asarray([int(file.split('.')[0].split('/')[-1]) for file in files])
                 temp = np.argsort(temp)
                 files = files[temp]
-                self.IMGS = gui_tool.add_page(np.asarray([cv2.imread(file) for file in files]))
+
+                self.IMGS = gui_tool.add_page(np.asarray([cv2.imdecode(np.fromfile(file, dtype=np.uint8), -1) for file in files]))
                 self.img_preview = self.IMGS[0]
                 self.num_of_img, self.h, self.w = self.IMGS.shape[:3]
 
