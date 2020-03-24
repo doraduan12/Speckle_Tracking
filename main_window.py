@@ -214,6 +214,7 @@ class Ui_MainWindow(object):
         font.setFamily("Calibri")
         font.setPointSize(10)
         self.spinBox_end.setFont(font)
+        self.spinBox_end.setMaximum(99)
         self.spinBox_end.setObjectName("spinBox_end")
         self.spinBox_start = QtWidgets.QSpinBox(self.groupBox_filedetail)
         self.spinBox_start.setGeometry(QtCore.QRect(70, 400, 61, 22))

@@ -388,7 +388,8 @@ class My_MainWindow(QMainWindow, Ui_MainWindow):
         for i in self.cv2_gui.result_distance.keys():
 
             # 抓出對應的顏色，並轉呈 matplotlib 的 RGB 0-1 格式
-            color = tuple([self.cv2_gui.colors[i][-j] / 255 for j in range(1, 4)])
+            color = tuple([self.cv2_gui.colors[i % self.cv2_gui.num_of_color][-j] / 255 for j in range(1, 4)])
+
             if self.radioButton_strain.isChecked():
                 if self.radioButton_spline.isChecked():
                     plt.plot([i for i in range(self.start, self.end)], gui_tool.lsq_spline_medain(self.cv2_gui.result_strain[i]), color=color)
