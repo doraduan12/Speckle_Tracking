@@ -12,7 +12,7 @@ import time
 
 from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtCore import pyqtSlot
-from PyQt5.QtWidgets import QFileDialog, QMainWindow, QMessageBox
+from PyQt5.QtWidgets import QFileDialog, QMainWindow, QMessageBox, QInputDialog
 from main_window import Ui_MainWindow
 
 from cv2_gui import *
@@ -75,6 +75,10 @@ class My_MainWindow(QMainWindow, Ui_MainWindow):
 
         # 按下 COLOR 轉換色彩
         self.btn_color.clicked.connect(self.clicked_btn_color)
+
+        # 按下 delta 設定 delta
+        self.btn_set_delta.clicked.connect(self.clicked_btn_set_delta)
+
 
         # 滑動 horizontal slide 的動作
         self.horizontalSlider_preview.valueChanged.connect(self.slide_change)
@@ -408,19 +412,35 @@ class My_MainWindow(QMainWindow, Ui_MainWindow):
                 plt.ylabel('Distance')
                 plt.title('Distance curve')
 
-        # TODO 改善顯示流程
-
-
         plt.savefig(self.default_path + '/output.png')
         plt.close()
 
-        # TODO 解決讀取中文路徑會出錯的問題
         self.result_curve_temp = cv2.imdecode(np.fromfile(self.default_path + '/output.png', dtype=np.uint8), -1)   # 解決中文路徑問題
         # self.result_curve_temp = cv2.imread(self.default_path + '/output.png') # 中文路徑會報錯
         os.remove(self.default_path + '/output.png')
 
         self.label_show_curve.setPixmap(QtGui.QPixmap(gui_tool.convert2qtimg(self.result_curve_temp)))
         self.label_show_curve.setScaledContents(True)
+
+
+    def clicked_btn_set_delta(self):
+        if not self.filename:
+            return
+
+        input_dy, okPressed = QInputDialog.getInt(self, "Set Delta x/y", "Line length (mm):", 5, 1, 20, 1)
+        if okPressed:
+            set_delta = SetDelta(self.IMGS[0])
+
+            while set_delta.undo:
+                cv2.setMouseCallback(set_delta.window_name, set_delta.click_event)  # 設定滑鼠回饋事件
+                cv2.waitKey(1)
+
+            cv2.destroyWindow(set_delta.window_name)
+            dy = abs(set_delta.point2[1] - set_delta.point1[1])
+
+            self.doubleSpinBox_delta_x.setValue(1000*input_dy/dy)
+            self.doubleSpinBox_delta_y.setValue(1000*input_dy/dy)
+
 
 
 

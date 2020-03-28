@@ -13,7 +13,7 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
         MainWindow.setObjectName("MainWindow")
-        MainWindow.resize(841, 860)
+        MainWindow.resize(841, 862)
         MainWindow.setIconSize(QtCore.QSize(32, 32))
         self.centralwidget = QtWidgets.QWidget(MainWindow)
         self.centralwidget.setObjectName("centralwidget")
@@ -233,6 +233,11 @@ class Ui_MainWindow(object):
         self.label_date_3.setTextFormat(QtCore.Qt.AutoText)
         self.label_date_3.setAlignment(QtCore.Qt.AlignRight|QtCore.Qt.AlignTrailing|QtCore.Qt.AlignVCenter)
         self.label_date_3.setObjectName("label_date_3")
+        self.btn_set_delta = QtWidgets.QPushButton(self.groupBox_filedetail)
+        self.btn_set_delta.setGeometry(QtCore.QRect(70, 230, 61, 61))
+        self.btn_set_delta.setStyleSheet("background-color: rgba(255, 255, 255, 0);")
+        self.btn_set_delta.setText("")
+        self.btn_set_delta.setObjectName("btn_set_delta")
         self.label_image_size.raise_()
         self.label_date.raise_()
         self.label_frame.raise_()
@@ -259,6 +264,7 @@ class Ui_MainWindow(object):
         self.spinBox_start.raise_()
         self.label_date_2.raise_()
         self.label_date_3.raise_()
+        self.btn_set_delta.raise_()
         self.groupBox_show_curve = QtWidgets.QGroupBox(self.centralwidget)
         self.groupBox_show_curve.setGeometry(QtCore.QRect(10, 500, 481, 311))
         font = QtGui.QFont()

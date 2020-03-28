@@ -319,10 +319,6 @@ class Cv2Line():
         cv2.waitKey(1)
 
 
-
-
-
-
 class Cv2Point():
 
     def __init__(self, imgs:np, delta_x: float, delta_y: float, window_name: str,
@@ -498,6 +494,54 @@ class Cv2Point():
         temp_img = cv2.line(np.copy(img), (0, self.h - 1), (((self.w - 1) * fraction)//denominator, self.h - 1), (216, 202, 28), 5)
         cv2.imshow(self.window_name, temp_img)
         cv2.waitKey(1)
+
+
+class SetDelta():
+    def __init__(self, img):
+        self.img = img
+        self.window_name = 'Set delta'
+        self.undo = True
+        cv2.imshow(self.window_name, self.img)
+        cv2.waitKey(1)
+
+    # 滑鼠事件
+    def click_event(self, event, x, y, flags, param):
+
+        # 劃出線段（左鍵點擊時）
+        if event == cv2.EVENT_LBUTTONDOWN:
+            self.mouse_drag = False
+            self.point1 = (x, y)  # 記錄起點
+
+        # 預覽線段（左鍵拖曳時）
+        elif flags == 1 & cv2.EVENT_FLAG_LBUTTON:
+            self.mouse_drag = True
+
+            # 複製目前畫面，在放開滑鼠之前都在複製畫面上作圖，否則會有許多線段互相覆蓋
+            temp_img = np.copy(self.img)
+            # print(self.current_color)
+            cv2.line(temp_img, self.point1, (x, y), (0, 0, 255), thickness=1)
+
+            # 刷新畫面
+            cv2.imshow(self.window_name, temp_img)
+
+        # 確定線段（左鍵放開時）
+        elif event == cv2.EVENT_LBUTTONUP:
+            if self.mouse_drag:
+                self.mouse_drag = False  # 拖曳重置
+
+                temp_img = np.copy(self.img)
+
+                # 紀錄 point2 的點
+                self.point2 = (x, y)
+
+                cv2.line(temp_img, self.point1, self.point2, (0, 0, 255), thickness=1)
+                cv2.circle(temp_img, self.point1, 1, (0, 0, 255), thickness=2)
+                cv2.circle(temp_img, self.point2, 1, (0, 0, 255), thickness=2)
+
+                cv2.imshow(self.window_name, temp_img)
+
+                self.undo = False
+
 
 
 if __name__ == '__main__':
