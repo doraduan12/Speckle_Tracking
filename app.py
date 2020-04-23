@@ -62,6 +62,8 @@ class My_MainWindow(QMainWindow, Ui_MainWindow):
         self.mode = ''
         self.result_curve_temp = ''
         self.default_path = 'D:/'
+        self.default_path = r'D:\NTUCode\01 LAB\20200406 test'
+
 
         # 按下 選路徑(btn_path) 按鈕
         self.btn_browse.clicked.connect(self.clicked_btn_path)
@@ -200,6 +202,9 @@ class My_MainWindow(QMainWindow, Ui_MainWindow):
                 files = files[temp]
 
                 self.IMGS = gui_tool.add_page(np.asarray([cv2.imdecode(np.fromfile(file, dtype=np.uint8), -1) for file in files]))
+                if np.ndim(self.IMGS) == 3:
+                    self.IMGS = cv2.merge([self.IMGS, self.IMGS, self.IMGS])
+
                 self.img_preview = self.IMGS[0]
                 self.num_of_img, self.h, self.w = self.IMGS.shape[:3]
 
@@ -364,7 +369,8 @@ class My_MainWindow(QMainWindow, Ui_MainWindow):
                 print('add point')
                 if self.mode == 'line':
                     self.cv2_gui.addPoint((224, 217), (243, 114))
-                    self.cv2_gui.addPoint((313, 122), (374, 292))
+                    # self.cv2_gui.addPoint((313, 122), (374, 292))
+                    # self.cv2_gui.addPoint((318, 131), (310, 174))
                 elif self.mode == 'point':
                     self.cv2_gui.addPoint((224, 217))
                     self.cv2_gui.addPoint((243, 114))
@@ -629,7 +635,7 @@ class My_MainWindow(QMainWindow, Ui_MainWindow):
         msg.setWindowIcon(QtGui.QIcon(':/icon.png'))
         msg.setText(
             'Author: Yuwen Huang\n\n' +
-            'Latest Update: 20200318\n\n' +
+            'Latest Update: 20200329\n\n' +
             'Website: https://github.com/Yuwen0810/Speckle_Tracking\n'
         )
         reply = msg.exec()

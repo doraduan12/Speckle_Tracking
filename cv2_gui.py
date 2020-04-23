@@ -36,7 +36,7 @@ class Cv2Line():
         self.IMGS_GRAY = np.asarray([cv2.cvtColor(img, cv2.COLOR_BGR2GRAY) for img in self.IMGS])
 
         self.img_label = np.copy(self.IMGS)
-        self.num_of_img, self.h, self.w, _ = self.IMGS.shape
+        self.num_of_img, self.h, self.w = self.IMGS.shape[:3]
 
         # 畫圖顏色
         self.color_index = 0
