@@ -488,6 +488,8 @@ class My_MainWindow(QMainWindow, Ui_MainWindow):
         if not self.filename or not self.cv2_gui:
             return
 
+        fps, okPressed = QInputDialog.getInt(self, "Set output video FPS", "FPS:", self.FPS, 1, 10000, 1)
+
         path, filetype = QFileDialog.getSaveFileName(self, "文件保存", self.default_path + '/' + self.default_filename + '.mp4', "All Files (*);;MP4 Files (*.mp4)")
 
         # 如果沒有選擇存檔路徑，結束 function
@@ -501,7 +503,7 @@ class My_MainWindow(QMainWindow, Ui_MainWindow):
 
         # 開始寫入 mp4
         fourcc = cv2.VideoWriter_fourcc('m', 'p', '4', 'v')
-        videowriter = cv2.VideoWriter(path, fourcc, self.FPS, (self.w, self.h))
+        videowriter = cv2.VideoWriter(path, fourcc, fps, (self.w, self.h))
 
         for img in self.cv2_gui.img_label:
             videowriter.write(img)
@@ -654,7 +656,7 @@ class My_MainWindow(QMainWindow, Ui_MainWindow):
         msg.setWindowIcon(QtGui.QIcon(':/icon.png'))
         msg.setText(
             'Author: Yuwen Huang\n\n' +
-            'Latest Update: 20200423\n\n' +
+            'Latest Update: 20200528\n\n' +
             'Website: https://github.com/Yuwen0810/Speckle_Tracking\n'
         )
         reply = msg.exec()
