@@ -62,7 +62,7 @@ class My_MainWindow(QMainWindow, Ui_MainWindow):
         self.mode = ''
         self.result_curve_temp = ''
         self.default_path = 'D:/'
-        self.default_path = r'D:\NTUCode\01 LAB\20200406 test'
+        self.default_path = r'D:\下載\__dicoms\096_STP'
 
 
         # 按下 選路徑(btn_path) 按鈕
@@ -355,7 +355,7 @@ class My_MainWindow(QMainWindow, Ui_MainWindow):
             # 「s」 執行 speckle tracking
             if action == 'speckle':
                 t1 = time.time()
-                self.cv2_gui.tracking(show=True if self.checkBox_show_process.isChecked() else False)
+                self.cv2_gui.tracking(show=True if self.checkBox_Animation.isChecked() else False)
                 t2 = time.time()
                 print('Speckle Tracking costs {} seconds.\n'.format(t2 - t1))
 
@@ -433,7 +433,7 @@ class My_MainWindow(QMainWindow, Ui_MainWindow):
         if not self.filename:
             return
 
-        input_dy, okPressed = QInputDialog.getInt(self, "Set Delta x/y", "Line length (mm):", 5, 1, 20, 1)
+        input_dy, okPressed = QInputDialog.getInt(self, "Set Delta x/y", "Line length (mm):", 5, 1, 100, 1)
         if okPressed:
             set_delta = SetDelta(self.IMGS[0])
 
@@ -635,7 +635,7 @@ class My_MainWindow(QMainWindow, Ui_MainWindow):
         msg.setWindowIcon(QtGui.QIcon(':/icon.png'))
         msg.setText(
             'Author: Yuwen Huang\n\n' +
-            'Latest Update: 20200329\n\n' +
+            'Latest Update: 20200423\n\n' +
             'Website: https://github.com/Yuwen0810/Speckle_Tracking\n'
         )
         reply = msg.exec()

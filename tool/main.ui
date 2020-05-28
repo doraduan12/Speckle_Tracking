@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>841</width>
-    <height>862</height>
+    <width>833</width>
+    <height>852</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -696,7 +696,7 @@
       <x>10</x>
       <y>500</y>
       <width>481</width>
-      <height>311</height>
+      <height>291</height>
      </rect>
     </property>
     <property name="font">
@@ -714,7 +714,7 @@
        <x>10</x>
        <y>20</y>
        <width>461</width>
-       <height>281</height>
+       <height>261</height>
       </rect>
      </property>
      <property name="font">
@@ -845,7 +845,7 @@
       <x>500</x>
       <y>500</y>
       <width>321</width>
-      <height>231</height>
+      <height>221</height>
      </rect>
     </property>
     <property name="font">
@@ -861,7 +861,7 @@
      <property name="geometry">
       <rect>
        <x>220</x>
-       <y>190</y>
+       <y>180</y>
        <width>91</width>
        <height>31</height>
       </rect>
@@ -989,17 +989,17 @@
       </item>
      </layout>
     </widget>
-    <widget class="QCheckBox" name="checkBox_show_process">
+    <widget class="QCheckBox" name="checkBox_Animation">
      <property name="geometry">
       <rect>
        <x>20</x>
-       <y>190</y>
+       <y>180</y>
        <width>121</width>
        <height>31</height>
       </rect>
      </property>
      <property name="text">
-      <string>Show process</string>
+      <string>Animation</string>
      </property>
     </widget>
     <widget class="QLabel" name="label_NULL">
@@ -1037,7 +1037,7 @@
        <x>10</x>
        <y>100</y>
        <width>301</width>
-       <height>91</height>
+       <height>111</height>
       </rect>
      </property>
      <property name="currentIndex">
@@ -1122,6 +1122,31 @@
         </item>
        </layout>
       </widget>
+      <widget class="QPushButton" name="btn_add_point">
+       <property name="geometry">
+        <rect>
+         <x>110</x>
+         <y>80</y>
+         <width>91</width>
+         <height>31</height>
+        </rect>
+       </property>
+       <property name="font">
+        <font>
+         <family>Calibri</family>
+         <pointsize>10</pointsize>
+        </font>
+       </property>
+       <property name="text">
+        <string>Add point</string>
+       </property>
+       <property name="autoRepeatDelay">
+        <number>-1</number>
+       </property>
+       <property name="autoRepeatInterval">
+        <number>-1</number>
+       </property>
+      </widget>
      </widget>
      <widget class="QWidget" name="page_2">
       <widget class="QWidget" name="horizontalLayoutWidget_3">
@@ -1167,12 +1192,19 @@
       </widget>
      </widget>
     </widget>
+    <zorder>stackedWidget_mode</zorder>
+    <zorder>btn_run</zorder>
+    <zorder>horizontalLayoutWidget</zorder>
+    <zorder>horizontalLayoutWidget_2</zorder>
+    <zorder>checkBox_Animation</zorder>
+    <zorder>label_NULL</zorder>
+    <zorder>line</zorder>
    </widget>
    <widget class="QGroupBox" name="groupBox_save">
     <property name="geometry">
      <rect>
       <x>500</x>
-      <y>740</y>
+      <y>720</y>
       <width>321</width>
       <height>71</height>
      </rect>
@@ -1233,7 +1265,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>841</width>
+     <width>833</width>
      <height>25</height>
     </rect>
    </property>
