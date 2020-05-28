@@ -51,6 +51,9 @@ class My_MainWindow(QMainWindow, Ui_MainWindow):
         # 先將顏色功能藏起來
         self.btn_color.hide()
 
+        # add line 隱藏
+        self.btn_add_line.hide()
+
         self.setup()
 
 
@@ -81,6 +84,8 @@ class My_MainWindow(QMainWindow, Ui_MainWindow):
         # 按下 delta 設定 delta
         self.btn_set_delta.clicked.connect(self.clicked_btn_set_delta)
 
+        # 新增點功能
+        self.btn_add_line.clicked.connect(self.clicked_btn_add_line)
 
         # 滑動 horizontal slide 的動作
         self.horizontalSlider_preview.valueChanged.connect(self.slide_change)
@@ -294,6 +299,7 @@ class My_MainWindow(QMainWindow, Ui_MainWindow):
             return
 
         cv2.destroyAllWindows()
+        self.btn_add_line.show()
 
         # 清除 strain curve 圖片
         self.label_show_curve.setPixmap(QtGui.QPixmap(""))
@@ -446,6 +452,19 @@ class My_MainWindow(QMainWindow, Ui_MainWindow):
 
             self.doubleSpinBox_delta_x.setValue(1000*input_dy/dy)
             self.doubleSpinBox_delta_y.setValue(1000*input_dy/dy)
+
+
+    def clicked_btn_add_line(self):
+        if not self.filename:
+            return
+
+        x1, okPressed = QInputDialog.getInt(self, "Add line", "x1:", 0, 0, self.w-1, 1)
+        if okPressed: y1, okPressed = QInputDialog.getInt(self, "Add line", "y1:", 0, 0, self.h-1, 1)
+        if okPressed: x2, okPressed = QInputDialog.getInt(self, "Add line", "x2:", 0, 0, self.w-1, 1)
+        if okPressed: y2, okPressed = QInputDialog.getInt(self, "Add line", "y2:", 0, 0, self.h-1, 1)
+        if not okPressed: return
+
+        self.cv2_gui.addPoint((x1, y1), (x2, y2))
 
 
 

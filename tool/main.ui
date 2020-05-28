@@ -1122,7 +1122,7 @@
         </item>
        </layout>
       </widget>
-      <widget class="QPushButton" name="btn_add_point">
+      <widget class="QPushButton" name="btn_add_line">
        <property name="geometry">
         <rect>
          <x>110</x>
@@ -1138,7 +1138,7 @@
         </font>
        </property>
        <property name="text">
-        <string>Add point</string>
+        <string>Add line</string>
        </property>
        <property name="autoRepeatDelay">
         <number>-1</number>
