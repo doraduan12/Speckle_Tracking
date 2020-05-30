@@ -65,7 +65,10 @@ class My_MainWindow(QMainWindow, Ui_MainWindow):
         self.mode = ''
         self.result_curve_temp = ''
         self.default_path = 'D:/'
-        self.default_path = r'D:\下載\__dicoms\096_STP'
+        self.default_path = r'E:\處理中\096_STP'
+
+        # 初始化 Console 內容
+        self.console_text = ''
 
 
         # 按下 選路徑(btn_path) 按鈕
@@ -112,6 +115,13 @@ class My_MainWindow(QMainWindow, Ui_MainWindow):
         # 設定更新頁數的 spinbox 動作
         self.spinBox_start.valueChanged.connect(self.spinBox_start_change)
         self.spinBox_end.valueChanged.connect(self.spinBox_end_change)
+
+
+        #################### 額外控制功能的動作 ####################
+
+        # 變更 spin target frame 時，更新參考點
+        self.spinBox_target_frame.valueChanged.connect(self.spinBox_target_frame_chane)
+
 
 
 
@@ -280,6 +290,8 @@ class My_MainWindow(QMainWindow, Ui_MainWindow):
             self.spinBox_start.setValue(0)
             self.spinBox_end.setValue(self.num_of_img-1)
 
+            #################### 額外控制功能的動作 ####################
+            self.spinBox_target_frame.setRange(0, self.num_of_img - 1)
 
 
         # 如果沒有選擇檔案的話
@@ -304,17 +316,9 @@ class My_MainWindow(QMainWindow, Ui_MainWindow):
         # 清除 strain curve 圖片
         self.label_show_curve.setPixmap(QtGui.QPixmap(""))
 
-
         # 紀錄設定的開始與結束頁
         self.start = self.spinBox_start.value()
         self.end = self.spinBox_end.value() + 1
-
-
-        # 判斷模式
-        if self.radioButton_line.isChecked():
-            mode = 'line'
-        elif self.radioButton_draw.isChecked():
-            mode = 'point'
 
         # 判斷 COST 方法
         if self.radioButton_SAD.isChecked():
@@ -323,21 +327,46 @@ class My_MainWindow(QMainWindow, Ui_MainWindow):
             cost = 'ssd'
 
 
+        # 呼叫 cv2 GUI class 的參數
         kwargs = {
-            'imgs': self.IMGS[self.start:self.end:,:,:],
+            'imgs': self.IMGS[self.start:self.end:, :, :],
             'window_name': self.filename,
-            'delta_x': float(self.doubleSpinBox_delta_x.value())/1000,
-            'delta_y': float(self.doubleSpinBox_delta_y.value())/1000,
+            'delta_x': float(self.doubleSpinBox_delta_x.value()) / 1000,
+            'delta_y': float(self.doubleSpinBox_delta_y.value()) / 1000,
             'temp_size': int(self.spinBox_temp_size.value()),
             'default_search': int(self.spinBox_search_range.value()),
             'cost': cost,
             'draw_delay': int(self.spinBox_drawing_delay.value())
         }
 
+
         # 設定模式
         if self.radioButton_line.isChecked():
             self.mode = 'line'
             self.cv2_gui = Cv2Line(**kwargs)
+
+            #################### 額外控制功能的動作 ####################
+            # ADD point 格式：
+            # (288, 114), (266, 194)
+            # (326, 123), (329, 184)
+            # (342, 105), (368, 179)
+            add_points = self.textBrowser_auto_add_point.toPlainText()
+            if add_points != '':
+                try:
+                    add_points = add_points.replace('(', '').replace(')', '').replace(' ', '').split("\n")
+                    for point in add_points:
+                        x1, y1, x2, y2 = point.split(',')
+                        x1, y1, x2, y2 = int(x1), int(y1), int(x2), int(y2)
+                        self.cv2_gui.addPoint((x1, y1), (x2, y2))
+                except:
+                    print("###########################\n"
+                          "# 輸入點的格式錯誤，應為：\n"
+                          "# (288, 114), (266, 194)\n"
+                          "# (326, 123), (329, 184)\n"
+                          "# (342, 105), (368, 179)\n"
+                          "###########################")
+
+
         elif self.radioButton_draw.isChecked():
             self.mode = 'point'
             self.cv2_gui = Cv2Point(**kwargs)
@@ -369,6 +398,18 @@ class My_MainWindow(QMainWindow, Ui_MainWindow):
                     self.plot_strain_curve()
                 elif self.mode == 'point':
                     pass
+
+                # 顯示資料在 console
+                target_frame = int(self.spinBox_target_frame.text())
+                self.console_text = ''
+                for k in self.cv2_gui.result_distance.keys():
+                    self.console_text += '{:.3f}\n'.format(self.cv2_gui.result_distance[k][target_frame])
+                self.console_text += '\n'
+
+                self.textBrowser_target_frame.setText(self.console_text)
+
+
+
 
             # 「t」 增加預設點數（測試時用）
             if action == 'test':
@@ -719,6 +760,20 @@ class My_MainWindow(QMainWindow, Ui_MainWindow):
 
     def spinBox_end_change(self, x):
         self.show_preview_img(np.copy(self.IMGS[x]), self.default_template, self.default_search)
+
+
+    def spinBox_target_frame_chane(self, x):
+        if not self.cv2_gui:
+            return
+
+        target_frame = x
+        self.console_text = ''
+        for k in self.cv2_gui.result_distance.keys():
+            self.console_text += '{:.3f}\n'.format(self.cv2_gui.result_distance[k][target_frame])
+        self.console_text += '\n'
+
+        self.textBrowser_target_frame.setText(self.console_text)
+
 
 
 if __name__ == "__main__":

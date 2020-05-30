@@ -162,7 +162,7 @@ class Cv2Line():
                 self.search_point.extend([[s11, s12], [s21, s22]])
                 self.search_shift.extend([(self.default_search // 2, self.default_search // 2), (self.default_search // 2, self.default_search // 2)])
 
-                print(self.point1, self.point2)
+                print(f"{self.point1}, {self.point2}")
 
                 cv2.imshow(self.window_name, self.img_label[self.current_page])
 
