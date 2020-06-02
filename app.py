@@ -132,7 +132,6 @@ class My_MainWindow(QMainWindow, Ui_MainWindow):
         files, filetype = QFileDialog.getOpenFileNames(self,  "選擇文件", self.default_path, # 起始路径
                                                        "All Files (*);;Dicom Files (*.dcm);;Png Files (*.png);;JPEG Files (*.jpeg)")
 
-
         if len(files) > 0:
             # 副檔名
             extension = os.path.splitext(files[0])[-1].lower()
@@ -202,7 +201,8 @@ class My_MainWindow(QMainWindow, Ui_MainWindow):
 
 
             # 如果讀到圖檔
-            elif extension == '.png' or extension =='.jpg' or extension == '.jpeg':
+            elif extension == '.png' or extension =='.jpg' or extension == '.jpeg' or extension == '.mp4':
+
                 browse_path = os.path.split(files[0])[0]
                 self.filename = os.path.split(browse_path)[-1]
 
@@ -210,15 +210,28 @@ class My_MainWindow(QMainWindow, Ui_MainWindow):
                 self.default_path = os.path.split(browse_path)[0]
                 self.default_filename = self.filename
 
-                # 排序圖檔
-                files = np.asarray(files)
-                temp = np.asarray([int(file.split('.')[0].split('/')[-1]) for file in files])
-                temp = np.argsort(temp)
-                files = files[temp]
+                if extension == '.mp4':
+                    capture = cv2.VideoCapture(files[0])
+                    ret, frame = capture.read()
+                    IMGS = []
+                    while ret:
+                        IMGS.append(frame)
+                        ret, frame = capture.read()
 
-                self.IMGS = gui_tool.add_page(np.asarray([cv2.imdecode(np.fromfile(file, dtype=np.uint8), -1) for file in files]))
-                if np.ndim(self.IMGS) == 3:
-                    self.IMGS = cv2.merge([self.IMGS, self.IMGS, self.IMGS])
+
+                    capture.release()
+                    self.IMGS = np.asarray(IMGS)
+
+                else:
+                    # 排序圖檔
+                    files = np.asarray(files)
+                    temp = np.asarray([int(file.split('.')[0].split('/')[-1]) for file in files])
+                    temp = np.argsort(temp)
+                    files = files[temp]
+
+                    self.IMGS = gui_tool.add_page(np.asarray([cv2.imdecode(np.fromfile(file, dtype=np.uint8), -1) for file in files]))
+                    if np.ndim(self.IMGS) == 3:
+                        self.IMGS = cv2.merge([self.IMGS, self.IMGS, self.IMGS])
 
                 self.img_preview = self.IMGS[0]
                 self.num_of_img, self.h, self.w = self.IMGS.shape[:3]
@@ -384,6 +397,7 @@ class My_MainWindow(QMainWindow, Ui_MainWindow):
             # 「r」 重置
             if action == 'reset':
                 # 清除 strain curve 圖片
+                self.textBrowser_labeled_points.clear()
                 self.label_show_curve.setPixmap(QtGui.QPixmap(""))
                 self.cv2_gui.reset()
 
@@ -401,14 +415,17 @@ class My_MainWindow(QMainWindow, Ui_MainWindow):
 
                 # 顯示資料在 console
                 target_frame = int(self.spinBox_target_frame.text())
-                self.console_text = ''
+                self.console_text = 'Length:\n'
                 for k in self.cv2_gui.result_distance.keys():
                     self.console_text += '{:.3f}\n'.format(self.cv2_gui.result_distance[k][target_frame])
                 self.console_text += '\n'
 
+                self.console_text += 'Result Points:\n'
+                for k in range(len(self.cv2_gui.result_point)):
+                    if k % 2 == 1:
+                        self.console_text += f"{self.cv2_gui.result_point[k - 1][target_frame]}, {self.cv2_gui.result_point[k][target_frame]}\n"
+
                 self.textBrowser_target_frame.setText(self.console_text)
-
-
 
 
             # 「t」 增加預設點數（測試時用）
@@ -427,10 +444,18 @@ class My_MainWindow(QMainWindow, Ui_MainWindow):
 
             # 按空白鍵查看點數狀況
             if action == 'space':
+                labeled_points = ''
+                for k in range(len(self.cv2_gui.target_point)):
+                    if k%2 == 1:
+                        labeled_points += f"{self.cv2_gui.target_point[k-1]}, {self.cv2_gui.target_point[k]}\n"
+
+                self.textBrowser_labeled_points.setText(labeled_points)
+
                 print('self.target_point : ', self.cv2_gui.target_point)
                 print('self.track_done : ', self.cv2_gui.track_done)
                 print('self.search_point : ', self.cv2_gui.search_point) # 目前沒用
                 print('self.search_shift : ', self.cv2_gui.search_shift)
+                print('self.result_points: ', self.cv2_gui.result_point)
                 print()
 
         cv2.destroyWindow(self.cv2_gui.window_name)  # （按 esc 跳出迴圈後）關閉視窗
@@ -767,10 +792,15 @@ class My_MainWindow(QMainWindow, Ui_MainWindow):
             return
 
         target_frame = x
-        self.console_text = ''
+        self.console_text = 'Length:\n'
         for k in self.cv2_gui.result_distance.keys():
             self.console_text += '{:.3f}\n'.format(self.cv2_gui.result_distance[k][target_frame])
         self.console_text += '\n'
+
+        self.console_text += 'Result Points:\n'
+        for k in range(len(self.cv2_gui.result_point)):
+            if k % 2 == 1:
+                self.console_text += f"{self.cv2_gui.result_point[k - 1][x]}, {self.cv2_gui.result_point[k][x]}\n"
 
         self.textBrowser_target_frame.setText(self.console_text)
 
