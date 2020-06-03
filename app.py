@@ -65,7 +65,7 @@ class My_MainWindow(QMainWindow, Ui_MainWindow):
         self.mode = ''
         self.result_curve_temp = ''
         self.default_path = 'D:/'
-        self.default_path = r'E:\處理中\096_STP'
+        # self.default_path = r'E:\處理中\096_STP'
 
         # 初始化 Console 內容
         self.console_text = ''
@@ -211,6 +211,7 @@ class My_MainWindow(QMainWindow, Ui_MainWindow):
                 self.default_filename = self.filename
 
                 if extension == '.mp4':
+                    self.filename = os.path.splitext(os.path.split(files[0])[-1])[0]
                     capture = cv2.VideoCapture(files[0])
                     ret, frame = capture.read()
                     IMGS = []
