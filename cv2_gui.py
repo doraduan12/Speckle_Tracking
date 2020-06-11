@@ -15,7 +15,7 @@ cv2_tool = Cv2Tools()
 class Cv2Line():
 
     def __init__(self, imgs:np, delta_x: float, delta_y: float, window_name: str,
-                 temp_size: int=32, default_search: int=10, cost: str='sad', draw_delay: int=10):
+                 temp_size: int=32, default_search: int=10, method: str='correlation_coefficient', draw_delay: int=10):
 
         self.IMGS = imgs
         self.window_name = window_name
@@ -59,7 +59,7 @@ class Cv2Line():
         cv2.imshow(self.window_name, self.img_label[self.current_page])
         cv2.waitKey(1)
 
-        self.speckle_tracking = SpeckleTracking(cost_method=cost)
+        self.speckle_tracking = SpeckleTracking(method=method)
 
 
 
@@ -285,7 +285,8 @@ class Cv2Line():
             for i in range(1, self.num_of_img):
                 progress_fraction += 1
                 # target, img1, img2, search_shift, temp_size
-                result = self.speckle_tracking.full(result, self.IMGS_GRAY[i-1], self.IMGS_GRAY[i], s_shift, self.temp_size)
+                result = self.speckle_tracking.method(result, self.IMGS_GRAY[i-1], self.IMGS_GRAY[i], s_shift, self.temp_size)
+
                 self.result_point[j].append(result)
 
                 cv2.circle(self.img_label[i], result, 2, color, thickness=-1)
@@ -322,7 +323,7 @@ class Cv2Line():
 class Cv2Point():
 
     def __init__(self, imgs:np, delta_x: float, delta_y: float, window_name: str,
-                 temp_size: int=32, default_search: int=10, cost: str='sad', draw_delay: int=10):
+                 temp_size: int=32, default_search: int=10, method: str='correlation_coefficient', draw_delay: int=10):
 
         self.IMGS = imgs
         self.window_name = window_name
@@ -356,7 +357,7 @@ class Cv2Point():
         cv2.imshow(self.window_name, self.img_label[self.current_page])
         cv2.waitKey(1)
 
-        self.speckle_tracking = SpeckleTracking(cost_method=cost)
+        self.speckle_tracking = SpeckleTracking(method=method)
 
 
     # 重置所有動作
@@ -476,7 +477,7 @@ class Cv2Point():
             for i in range(1, self.num_of_img):
                 progress_fraction += 1
                 # target, img1, img2, search_shift, temp_size
-                result = self.speckle_tracking.full(result, self.IMGS_GRAY[i-1], self.IMGS_GRAY[i], search_shift, self.temp_size)
+                result = self.speckle_tracking.method(result, self.IMGS_GRAY[i-1], self.IMGS_GRAY[i], search_shift, self.temp_size)
                 self.result_point[j].append(result)
                 cv2.circle(self.img_label[i], result, 1, (0, 0, 255), thickness=-1)
 

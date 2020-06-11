@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>833</width>
-    <height>852</height>
+    <width>836</width>
+    <height>870</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -696,7 +696,7 @@
       <x>10</x>
       <y>500</y>
       <width>481</width>
-      <height>291</height>
+      <height>321</height>
      </rect>
     </property>
     <property name="font">
@@ -714,7 +714,7 @@
        <x>10</x>
        <y>20</y>
        <width>461</width>
-       <height>261</height>
+       <height>291</height>
       </rect>
      </property>
      <property name="font">
@@ -845,7 +845,7 @@
       <x>500</x>
       <y>500</y>
       <width>321</width>
-      <height>221</height>
+      <height>251</height>
      </rect>
     </property>
     <property name="font">
@@ -861,7 +861,7 @@
      <property name="geometry">
       <rect>
        <x>220</x>
-       <y>180</y>
+       <y>210</y>
        <width>91</width>
        <height>31</height>
       </rect>
@@ -953,11 +953,29 @@
       <item>
        <widget class="QLabel" name="label_model_3">
         <property name="text">
-         <string>Cost  |</string>
+         <string>Method |</string>
         </property>
         <property name="alignment">
          <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
         </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QRadioButton" name="radioButton_CC">
+        <property name="font">
+         <font>
+          <pointsize>10</pointsize>
+         </font>
+        </property>
+        <property name="text">
+         <string>CC</string>
+        </property>
+        <property name="checked">
+         <bool>true</bool>
+        </property>
+        <attribute name="buttonGroup">
+         <string notr="true">buttonGroup</string>
+        </attribute>
        </widget>
       </item>
       <item>
@@ -971,20 +989,11 @@
          <string>SAD</string>
         </property>
         <property name="checked">
-         <bool>true</bool>
+         <bool>false</bool>
         </property>
-       </widget>
-      </item>
-      <item>
-       <widget class="QRadioButton" name="radioButton_SSD">
-        <property name="font">
-         <font>
-          <pointsize>10</pointsize>
-         </font>
-        </property>
-        <property name="text">
-         <string>SSD</string>
-        </property>
+        <attribute name="buttonGroup">
+         <string notr="true">buttonGroup</string>
+        </attribute>
        </widget>
       </item>
      </layout>
@@ -996,7 +1005,7 @@
      <property name="geometry">
       <rect>
        <x>20</x>
-       <y>180</y>
+       <y>210</y>
        <width>121</width>
        <height>31</height>
       </rect>
@@ -1008,27 +1017,11 @@
       <bool>true</bool>
      </property>
     </widget>
-    <widget class="QLabel" name="label_NULL">
-     <property name="geometry">
-      <rect>
-       <x>10</x>
-       <y>60</y>
-       <width>74</width>
-       <height>29</height>
-      </rect>
-     </property>
-     <property name="text">
-      <string/>
-     </property>
-     <property name="alignment">
-      <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-     </property>
-    </widget>
     <widget class="Line" name="line">
      <property name="geometry">
       <rect>
        <x>10</x>
-       <y>90</y>
+       <y>120</y>
        <width>301</width>
        <height>21</height>
       </rect>
@@ -1041,9 +1034,9 @@
      <property name="geometry">
       <rect>
        <x>10</x>
-       <y>100</y>
+       <y>130</y>
        <width>301</width>
-       <height>111</height>
+       <height>141</height>
       </rect>
      </property>
      <property name="currentIndex">
@@ -1054,7 +1047,7 @@
        <property name="geometry">
         <rect>
          <x>0</x>
-         <y>10</y>
+         <y>0</y>
          <width>301</width>
          <height>31</height>
         </rect>
@@ -1201,19 +1194,77 @@
       </widget>
      </widget>
     </widget>
+    <widget class="QWidget" name="horizontalLayoutWidget_17">
+     <property name="geometry">
+      <rect>
+       <x>10</x>
+       <y>90</y>
+       <width>301</width>
+       <height>31</height>
+      </rect>
+     </property>
+     <layout class="QHBoxLayout" name="horizontalLayout_cost_4">
+      <item>
+       <widget class="QLabel" name="label_model_7">
+        <property name="text">
+         <string>|</string>
+        </property>
+        <property name="alignment">
+         <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QRadioButton" name="radioButton_Cross">
+        <property name="font">
+         <font>
+          <pointsize>10</pointsize>
+         </font>
+        </property>
+        <property name="text">
+         <string>Cross</string>
+        </property>
+        <property name="checked">
+         <bool>false</bool>
+        </property>
+        <attribute name="buttonGroup">
+         <string notr="true">buttonGroup</string>
+        </attribute>
+       </widget>
+      </item>
+      <item>
+       <widget class="QRadioButton" name="radioButton_Optical">
+        <property name="font">
+         <font>
+          <pointsize>10</pointsize>
+         </font>
+        </property>
+        <property name="text">
+         <string>Optical</string>
+        </property>
+        <property name="checked">
+         <bool>false</bool>
+        </property>
+        <attribute name="buttonGroup">
+         <string notr="true">buttonGroup</string>
+        </attribute>
+       </widget>
+      </item>
+     </layout>
+    </widget>
     <zorder>stackedWidget_mode</zorder>
     <zorder>btn_run</zorder>
     <zorder>horizontalLayoutWidget</zorder>
     <zorder>horizontalLayoutWidget_2</zorder>
     <zorder>checkBox_Animation</zorder>
-    <zorder>label_NULL</zorder>
     <zorder>line</zorder>
+    <zorder>horizontalLayoutWidget_17</zorder>
    </widget>
    <widget class="QGroupBox" name="groupBox_save">
     <property name="geometry">
      <rect>
       <x>500</x>
-      <y>720</y>
+      <y>750</y>
       <width>321</width>
       <height>71</height>
      </rect>
@@ -1431,7 +1482,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>833</width>
+     <width>836</width>
      <height>25</height>
     </rect>
    </property>
@@ -1460,4 +1511,7 @@
  </widget>
  <resources/>
  <connections/>
+ <buttongroups>
+  <buttongroup name="buttonGroup"/>
+ </buttongroups>
 </ui>

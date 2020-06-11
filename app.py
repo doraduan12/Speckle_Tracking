@@ -336,9 +336,13 @@ class My_MainWindow(QMainWindow, Ui_MainWindow):
 
         # 判斷 COST 方法
         if self.radioButton_SAD.isChecked():
-            cost = 'sad'
-        elif self.radioButton_SSD.isChecked():
-            cost = 'ssd'
+            method = 'sad'
+        elif self.radioButton_CC.isChecked():
+            method = 'correlation_coefficient'
+        elif self.radioButton_Cross.isChecked():
+            method = 'cross_correlation'
+        elif self.radioButton_Optical.isChecked():
+            method = 'optical_flow'
 
 
         # 呼叫 cv2 GUI class 的參數
@@ -349,7 +353,7 @@ class My_MainWindow(QMainWindow, Ui_MainWindow):
             'delta_y': float(self.doubleSpinBox_delta_y.value()) / 1000,
             'temp_size': int(self.spinBox_temp_size.value()),
             'default_search': int(self.spinBox_search_range.value()),
-            'cost': cost,
+            'method': method,
             'draw_delay': int(self.spinBox_drawing_delay.value())
         }
 

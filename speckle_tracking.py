@@ -5,12 +5,19 @@ import time
 
 class SpeckleTracking():
 
-    def __init__(self, cost_method='sad'):
+    def __init__(self, method='correlation_coefficient'):
+        if method == 'correlation_coefficient':
+            self.method = self.full_Correlation_oefficient
+        elif method == 'sad':
+            self.method = self.full_SAD
+        elif method == 'cross_correlation':
+            self.method = self.full_Cross_Correlation
+        elif method == 'optical_flow':
+            self.method = self.optical_flow
+            self.lk_params = dict(winSize=(17, 17),
+                             maxLevel=2,
+                             criteria=(cv2.TERM_CRITERIA_EPS | cv2.TERM_CRITERIA_COUNT, 10, 0.03))
 
-        cost_method = cost_method.lower()
-        if cost_method == 'sad': self.cost_method = self.SAD
-        elif cost_method == 'ssd': self.cost_method = self.SSD
-        elif cost_method == 'census': self.cost_method = self.census()
 
 
     ############################################
@@ -30,10 +37,66 @@ class SpeckleTracking():
     ############################################
     ############################################
 
+    def optical_flow(self, target: tuple, img1: np, img2: np, search_shift: tuple, temp_size: int) -> tuple:
+        # Parameters for lucas kanade optical flow
+
+        target = np.asarray(target, dtype='float32').reshape(-1, 1, 2)
+
+        result, st, err = cv2.calcOpticalFlowPyrLK(img1, img2, target, None, **self.lk_params)
+
+        result_x, result_y = result.reshape(-1)
+
+        return (result_x, result_y)
+
+
+
+    def full_Correlation_oefficient(self, target: tuple, img1: np, img2: np, search_shift: tuple, temp_size: int) -> tuple:
+        # cv2.matchTemplate 是從左上角點來匹配，並且不會新增 padding，因此要對search window 的角落多開半個 temp_size
+        temp_bias = temp_size//2
+        search_x, search_y = search_shift
+        tx, ty = target
+
+        template = img2[ty - search_y - temp_bias: ty + search_y + temp_bias,
+                          tx - search_x - temp_bias: tx + search_x + temp_bias]
+
+        target_img = img1[ty - temp_bias: ty + temp_bias, tx - temp_bias: tx + temp_bias]
+
+
+        result = cv2.matchTemplate(template, target_img, cv2.TM_CCOEFF_NORMED)
+        # cv2.normalize(result, result, 0, 1, cv2.NORM_MINMAX, -1)
+        min_val, max_val, min_loc, max_loc = cv2.minMaxLoc(result)
+
+        result_x, result_y = max_loc
+        
+        return (tx - search_x + result_x, ty - search_y + result_y)
+
+
+
+
+    def full_Cross_Correlation(self, target: tuple, img1: np, img2: np, search_shift: tuple, temp_size: int) -> tuple:
+        # cv2.matchTemplate 是從左上角點來匹配，並且不會新增 padding，因此要對search window 的角落多開半個 temp_size
+        temp_bias = temp_size // 2
+        search_x, search_y = search_shift
+        tx, ty = target
+
+        template = img2[ty - search_y - temp_bias: ty + search_y + temp_bias,
+                   tx - search_x - temp_bias: tx + search_x + temp_bias]
+
+        target_img = img1[ty - temp_bias: ty + temp_bias, tx - temp_bias: tx + temp_bias]
+
+        result = cv2.matchTemplate(template, target_img, cv2.TM_CCORR_NORMED)
+        # cv2.normalize(result, result, 0, 1, cv2.NORM_MINMAX, -1)
+        min_val, max_val, min_loc, max_loc = cv2.minMaxLoc(result)
+
+        result_x, result_y = max_loc
+
+        return (tx - search_x + result_x, ty - search_y + result_y)
+
+
+
 
     # target, img1, img2, search_shift, temp_size
-    def full(self, target: tuple, img1: np, img2: np, search_shift: tuple, temp_size: int) -> tuple:
-
+    def full_SAD(self, target: tuple, img1: np, img2: np, search_shift: tuple, temp_size: int) -> tuple:
         # 將原本位置紀錄為答案（以免找不到點）
         output = target
         tx, ty = target
@@ -43,7 +106,7 @@ class SpeckleTracking():
         now_window = img1[ty - t_shift: ty + t_shift, tx - t_shift: tx + t_shift]
         next_window = img2[ty - t_shift: ty + t_shift, tx - t_shift: tx + t_shift]
 
-        cost_min = self.cost_method(now_window, next_window)
+        cost_min = self.SSD(now_window, next_window)
 
         search_x, search_y = search_shift
 
@@ -54,7 +117,7 @@ class SpeckleTracking():
 
                 next_window = img2[ty + i - t_shift: ty + i + t_shift, tx + j - t_shift: tx + j + t_shift]
 
-                cost = self.cost_method(now_window, next_window)
+                cost = self.SSD(now_window, next_window)
                 if cost < cost_min:
                     cost_min = cost
                     output = (tx + j, ty + i)
