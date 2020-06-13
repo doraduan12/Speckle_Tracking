@@ -4,6 +4,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
 import matplotlib
+import json
 
 import sys
 import os
@@ -21,6 +22,8 @@ gui_tool = GuiTools()
 
 import cgitb
 cgitb.enable( format = 'text')
+
+
 
 '''
 20200316 meeting
@@ -54,18 +57,36 @@ class My_MainWindow(QMainWindow, Ui_MainWindow):
         # add line 隱藏
         self.btn_add_line.hide()
 
+        # 讀取記錄檔
+        self.json_para = self.use_json('read')
+
         self.setup()
 
 
+
     def setup(self):
+
+        # 設定 json 內容
+        self.default_path = self.json_para['path']
+
+        if self.json_para['method'] == 'sad':
+            self.radioButton_SAD.setChecked(True)
+        elif self.json_para['method'] == 'correlation_coefficient':
+            self.radioButton_PPMCC.setChecked(True)
+        elif self.json_para['method'] == 'cross_correlation':
+            self.radioButton_CC.setChecked(True)
+        elif self.json_para['method'] == 'optical_flow':
+            self.radioButton_Optical.setChecked(True)
+
+        self.checkBox_Animation.setChecked(self.json_para['animation'])
+
+
 
         # 初始化防止特定錯誤
         self.filename = ''
         self.cv2_gui = ''
         self.mode = ''
         self.result_curve_temp = ''
-        self.default_path = 'D:/'
-        # self.default_path = r'E:\處理中\096_STP'
 
         # 初始化 Console 內容
         self.console_text = ''
@@ -74,9 +95,12 @@ class My_MainWindow(QMainWindow, Ui_MainWindow):
         # 按下 選路徑(btn_path) 按鈕
         self.btn_browse.clicked.connect(self.clicked_btn_path)
 
-        # 設定更新 Window spinbox 的動作
+        # 設定更新 template, search window spinbox 的動作
         self.spinBox_temp_size.valueChanged.connect(self.spinBox_temp_changed)
         self.spinBox_search_range.valueChanged.connect(self.spinBox_search_changed)
+
+        # 更新更新 draw delay 的大小
+        self.spinBox_drawing_delay.valueChanged.connect(self.spinBox_drawing_delay_changed)
 
         # 按下執行時的動作
         self.btn_run.clicked.connect(self.clicked_btn_run)
@@ -95,7 +119,7 @@ class My_MainWindow(QMainWindow, Ui_MainWindow):
 
         # SAVE 相關
         # 按下儲存結果
-        self.btn_save_result.clicked.connect(self.clicked_btn_save_result)
+        self.btn_save_video.clicked.connect(self.clicked_btn_save_video)
         self.btn_save_csv.clicked.connect(self.clicked_btn_save_csv)
         self.btn_save_curve.clicked.connect(self.clicked_btn_save_curve)
 
@@ -112,16 +136,23 @@ class My_MainWindow(QMainWindow, Ui_MainWindow):
         # 按下軟體資訊
         self.action_version.triggered.connect(self.action_soft_information)
 
+        # 按下 Reset Setting
+        self.action_reset_setting.triggered.connect(self.action_reset_setting_triggered)
+
+        # 按下 open setting file
+        self.action_open_setting_file.triggered.connect(self.action_open_setting_triggered)
+
         # 設定更新頁數的 spinbox 動作
         self.spinBox_start.valueChanged.connect(self.spinBox_start_change)
         self.spinBox_end.valueChanged.connect(self.spinBox_end_change)
 
+        # 按下 animation -> 更新 json 設定檔
+        self.checkBox_Animation.clicked.connect(self.checkBox_Animation_change)
 
         #################### 額外控制功能的動作 ####################
 
         # 變更 spin target frame 時，更新參考點
         self.spinBox_target_frame.valueChanged.connect(self.spinBox_target_frame_chane)
-
 
 
 
@@ -132,7 +163,13 @@ class My_MainWindow(QMainWindow, Ui_MainWindow):
         files, filetype = QFileDialog.getOpenFileNames(self,  "選擇文件", self.default_path, # 起始路径
                                                        "All Files (*);;Dicom Files (*.dcm);;Png Files (*.png);;JPEG Files (*.jpeg)")
 
+        # 如果有讀到檔案
         if len(files) > 0:
+            # 更新預設路徑
+            self.default_path = os.path.split(files[0])[0]
+            self.json_para['path'] = self.default_path
+            self.use_json('write')
+
             # 副檔名
             extension = os.path.splitext(files[0])[-1].lower()
 
@@ -185,19 +222,23 @@ class My_MainWindow(QMainWindow, Ui_MainWindow):
                 if 'SequenceOfUltrasoundRegions' in dir(dicom):
                     deltax = dicom.SequenceOfUltrasoundRegions[0].PhysicalDeltaX
                     deltay = dicom.SequenceOfUltrasoundRegions[0].PhysicalDeltaY
+                    deltax = deltax // 0.000001 / 1000
+                    deltay = deltay // 0.000001 / 1000
 
                 elif 'PixelSpacing' in dir(dicom):
                     deltax, deltay = dicom.PixelSpacing
+                    deltax = deltax // 0.000001 / 1000
+                    deltay = deltay // 0.000001 / 1000
 
                 else:
-                    deltax, deltay = 0, 0
+                    deltax, deltay = self.json_para['delta_x'], self.json_para['delta_y']
 
 
                 # 讀取 dicom 的 fps
                 if 'RecommendedDisplayFrameRate' in dir(dicom):
-                    self.FPS = dicom.RecommendedDisplayFrameRate
+                    self.json_para['video_fps'] = dicom.RecommendedDisplayFrameRate
                 else:
-                    self.FPS = 20
+                    pass
 
 
             # 如果讀到圖檔
@@ -241,12 +282,8 @@ class My_MainWindow(QMainWindow, Ui_MainWindow):
 
                 date, time, system_name = '', '', ''
 
-                # TODO deltax, y = 0 的時候顯示 pixel 值
-                # TODO 或是讓使用者畫線，換算 dx, dy
-                deltax, deltay = 0, 0
+                deltax, deltay = self.json_para['delta_x'], self.json_para['delta_y']
 
-                # 設定 fps
-                self.FPS = 20
 
 
             # 如果讀入檔案不是 dicom 或是 圖檔
@@ -275,28 +312,29 @@ class My_MainWindow(QMainWindow, Ui_MainWindow):
             self.label_time_show.setText(str(time))
             self.label_frame_show.setText(str(self.num_of_img))
 
-            self.doubleSpinBox_delta_x.setValue(deltax // 0.000001 / 1000)
-            self.doubleSpinBox_delta_y.setValue(deltay // 0.000001 / 1000)
+            # 更新 josn 參數
+            self.json_para['delta_x'] = deltax
+            self.json_para['delta_y'] = deltay
+            self.doubleSpinBox_delta_x.setValue(deltax)
+            self.doubleSpinBox_delta_y.setValue(deltay)
 
             # horizontalSlider_preview 設定最大值、歸零
             self.horizontalSlider_preview.setMaximum(len(self.IMGS) - 1)
             self.horizontalSlider_preview.setValue(0)
 
             # 預設的 template block 與 search window
-            self.default_template = 32
-            self.default_search = 10
-            self.spinBox_temp_size.setValue(self.default_template)
+            self.spinBox_temp_size.setValue(self.json_para['template_size'])
             self.spinBox_temp_size.setRange(1, self.h//2)
-            self.spinBox_search_range.setValue(self.default_search)
+            self.spinBox_search_range.setValue(self.json_para['search_size'])
             self.spinBox_search_range.setRange(1, self.h//2)
 
             # 預設的 draw delay
-            self.default_draw_delay = 20
+            self.default_draw_delay = self.json_para['draw_delay']
             self.spinBox_drawing_delay.setValue(self.default_draw_delay)
             self.spinBox_drawing_delay.setRange(1, 100)
 
             # 建立預覽圖片、自適化調整
-            self.show_preview_img(np.copy(self.img_preview), self.default_template, self.default_search)
+            self.show_preview_img(np.copy(self.img_preview), self.json_para['template_size'], self.json_para['search_size'])
 
             # 預設上下限與初始頁數
             self.spinBox_start.setRange(0, self.num_of_img-1)
@@ -336,25 +374,27 @@ class My_MainWindow(QMainWindow, Ui_MainWindow):
 
         # 判斷 COST 方法
         if self.radioButton_SAD.isChecked():
-            method = 'sad'
+            self.json_para['method'] = 'sad'
+        elif self.radioButton_PPMCC.isChecked():
+            self.json_para['method'] = 'correlation_coefficient'
         elif self.radioButton_CC.isChecked():
-            method = 'correlation_coefficient'
-        elif self.radioButton_Cross.isChecked():
-            method = 'cross_correlation'
+            self.json_para['method'] = 'cross_correlation'
         elif self.radioButton_Optical.isChecked():
-            method = 'optical_flow'
+            self.json_para['method'] = 'optical_flow'
 
 
         # 呼叫 cv2 GUI class 的參數
         kwargs = {
+            'main_textbrowser': self.textBrowser_labeled_points,
             'imgs': self.IMGS[self.start:self.end:, :, :],
             'window_name': self.filename,
             'delta_x': float(self.doubleSpinBox_delta_x.value()) / 1000,
             'delta_y': float(self.doubleSpinBox_delta_y.value()) / 1000,
             'temp_size': int(self.spinBox_temp_size.value()),
             'default_search': int(self.spinBox_search_range.value()),
-            'method': method,
-            'draw_delay': int(self.spinBox_drawing_delay.value())
+            'method': self.json_para['method'],
+            'draw_delay': int(self.spinBox_drawing_delay.value()),
+            'json_para': self.json_para
         }
 
 
@@ -389,7 +429,9 @@ class My_MainWindow(QMainWindow, Ui_MainWindow):
             self.mode = 'point'
             self.cv2_gui = Cv2Point(**kwargs)
 
+        self.use_json('write')
 
+        ###################### 主程式運行 ######################
         while True:
             cv2.setMouseCallback(self.cv2_gui.window_name, self.cv2_gui.click_event)  # 設定滑鼠回饋事件
 
@@ -415,46 +457,41 @@ class My_MainWindow(QMainWindow, Ui_MainWindow):
 
                 if self.mode == 'line':
                     self.plot_strain_curve()
+
+                    # 顯示資料在 console
+                    target_frame = int(self.spinBox_target_frame.text())
+                    self.console_text = 'Length:\n'
+                    for k in self.cv2_gui.result_distance.keys():
+                        self.console_text += '{:.3f}\n'.format(self.cv2_gui.result_distance[k][target_frame])
+                    self.console_text += '\n'
+
+                    self.console_text += 'Result Points:\n'
+                    for k in range(len(self.cv2_gui.result_point)):
+                        if k % 2 == 1:
+                            self.console_text += f"{self.cv2_gui.result_point[k - 1][target_frame]}, {self.cv2_gui.result_point[k][target_frame]}\n"
+
+                    self.textBrowser_target_frame.setText(self.console_text)
+
                 elif self.mode == 'point':
                     pass
-
-                # 顯示資料在 console
-                target_frame = int(self.spinBox_target_frame.text())
-                self.console_text = 'Length:\n'
-                for k in self.cv2_gui.result_distance.keys():
-                    self.console_text += '{:.3f}\n'.format(self.cv2_gui.result_distance[k][target_frame])
-                self.console_text += '\n'
-
-                self.console_text += 'Result Points:\n'
-                for k in range(len(self.cv2_gui.result_point)):
-                    if k % 2 == 1:
-                        self.console_text += f"{self.cv2_gui.result_point[k - 1][target_frame]}, {self.cv2_gui.result_point[k][target_frame]}\n"
-
-                self.textBrowser_target_frame.setText(self.console_text)
 
 
             # 「t」 增加預設點數（測試時用）
             if action == 'test':
-                print('add point')
-                if self.mode == 'line':
-                    self.cv2_gui.addPoint((224, 217), (243, 114))
-                    # self.cv2_gui.addPoint((313, 122), (374, 292))
-                    # self.cv2_gui.addPoint((318, 131), (310, 174))
-                elif self.mode == 'point':
-                    self.cv2_gui.addPoint((224, 217))
-                    self.cv2_gui.addPoint((243, 114))
-                    self.cv2_gui.addPoint((224, 217))
-                    self.cv2_gui.addPoint((374, 292))
+                print(f"self.cv2_gui.result_strain :\n{self.cv2_gui.result_strain}")
+                cumsum = {}
+                for k in self.cv2_gui.result_strain.keys():
+                    cumsum[k] = np.cumsum(np.abs(self.cv2_gui.result_strain[k]))
+
+                print(f"cumsum :\n{cumsum}")
+                # print(f"self.cv2_gui.result_distance :\n{self.cv2_gui.result_distance}")
+
+
 
 
             # 按空白鍵查看點數狀況
             if action == 'space':
                 labeled_points = ''
-                for k in range(len(self.cv2_gui.target_point)):
-                    if k%2 == 1:
-                        labeled_points += f"{self.cv2_gui.target_point[k-1]}, {self.cv2_gui.target_point[k]}\n"
-
-                self.textBrowser_labeled_points.setText(labeled_points)
 
                 print('self.target_point : ', self.cv2_gui.target_point)
                 print('self.track_done : ', self.cv2_gui.track_done)
@@ -520,9 +557,10 @@ class My_MainWindow(QMainWindow, Ui_MainWindow):
 
             cv2.destroyWindow(set_delta.window_name)
             dy = abs(set_delta.point2[1] - set_delta.point1[1])
-
-            self.doubleSpinBox_delta_x.setValue(1000*input_dy/dy)
-            self.doubleSpinBox_delta_y.setValue(1000*input_dy/dy)
+            self.json_para['delta_x'] = 1000*input_dy/dy
+            self.json_para['delta_y'] = 1000*input_dy/dy
+            self.doubleSpinBox_delta_x.setValue(self.json_para['delta_y'])
+            self.doubleSpinBox_delta_y.setValue(self.json_para['delta_y'])
 
 
     def clicked_btn_add_line(self):
@@ -551,21 +589,27 @@ class My_MainWindow(QMainWindow, Ui_MainWindow):
         self.img_preview = self.IMGS[0]
 
         # 建立預覽圖片、自適化調整
-        self.show_preview_img(np.copy(self.img_preview), self.default_search, self.default_search)
+        self.show_preview_img(np.copy(self.img_preview), self.json_para['template_size'], self.json_para['search_size'])
 
     # 存檔的按鈕
-    def clicked_btn_save_result(self):
+    def clicked_btn_save_video(self):
         # 如果尚未選擇影像，或是尚未運行 cv2，不運行按鈕
         if not self.filename or not self.cv2_gui:
             return
 
-        fps, okPressed = QInputDialog.getInt(self, "Set output video FPS", "FPS:", self.FPS, 1, 10000, 1)
+        fps, okPressed = QInputDialog.getInt(self, "Set output video FPS", "FPS:", self.json_para['video_fps'], 1, 10000, 1)
+        if okPressed == False:
+            return
 
         path, filetype = QFileDialog.getSaveFileName(self, "文件保存", self.default_path + '/' + self.default_filename + '.mp4', "All Files (*);;MP4 Files (*.mp4)")
 
         # 如果沒有選擇存檔路徑，結束 function
         if not path:
             return
+
+        self.json_para['video_fps'] = fps
+        self.use_json('write')
+
 
         # 強制轉換副檔名為 mp4
         filename = os.path.split(path)[-1]
@@ -682,7 +726,7 @@ class My_MainWindow(QMainWindow, Ui_MainWindow):
 
         # 儲存 mp4
         fourcc = cv2.VideoWriter_fourcc('m', 'p', '4', 'v')
-        videowriter = cv2.VideoWriter(path + '.mp4', fourcc, self.FPS, (self.w, self.h))
+        videowriter = cv2.VideoWriter(path + '.mp4', fourcc, self.json_para['video_fps'], (self.w, self.h))
 
         for img in self.cv2_gui.img_label:
             videowriter.write(img)
@@ -727,11 +771,29 @@ class My_MainWindow(QMainWindow, Ui_MainWindow):
         msg.setWindowIcon(QtGui.QIcon(':/icon.png'))
         msg.setText(
             'Author: Yuwen Huang\n\n' +
-            'Latest Update: 20200528\n\n' +
+            'Latest Update: 20200613\n\n' +
             'Website: https://github.com/Yuwen0810/Speckle_Tracking\n'
         )
         reply = msg.exec()
 
+
+    # Reset Setting
+    def action_reset_setting_triggered(self):
+        with open('setting_default.json', 'r') as f_default, open('setting.json', 'w') as f:
+            f_default_content = f_default.read()
+            self.json_para = json.loads(f_default_content)
+
+            print(f_default_content, file=f)
+
+        # 重製設定
+        self.spinBox_temp_size.setValue(self.json_para['template_size'])
+        self.spinBox_search_range.setValue(self.json_para['search_size'])
+        self.default_draw_delay = self.json_para['draw_delay']
+        self.radioButton_PPMCC.setChecked(True)
+
+    # Open Setting file
+    def action_open_setting_triggered(self):
+        os.startfile(os.path.join(os.getcwd(), 'setting.json'))
 
 
     def radio_btn_line_change(self):
@@ -757,7 +819,7 @@ class My_MainWindow(QMainWindow, Ui_MainWindow):
 
         # 建立預覽圖片、自適化調整
         self.img_preview = self.IMGS[self.horizontalSlider_preview.value()]
-        self.show_preview_img(np.copy(self.img_preview), self.default_template, self.default_search)
+        self.show_preview_img(np.copy(self.img_preview), self.json_para['template_size'], self.json_para['search_size'])
 
 
     # 顯示預覽影像、自適化調整
@@ -775,21 +837,30 @@ class My_MainWindow(QMainWindow, Ui_MainWindow):
         self.label_preview.setPixmap(QtGui.QPixmap(gui_tool.convert2qtimg(img)))
         self.label_preview.setScaledContents(True)
 
+    def spinBox_drawing_delay_changed(self, x):
+        self.json_para['draw_delay'] = x
 
     def spinBox_temp_changed(self, x):
-        self.default_template = x
-        self.show_preview_img(np.copy(self.img_preview), self.default_template, self.default_search)
+        self.json_para['template_size'] = x
+        self.show_preview_img(np.copy(self.img_preview), self.json_para['template_size'], self.json_para['search_size'])
 
     def spinBox_search_changed(self, x):
-        self.default_search = x
-        self.show_preview_img(np.copy(self.img_preview), self.default_template, self.default_search)
+        self.json_para['search_size'] = x
+        self.show_preview_img(np.copy(self.img_preview), self.json_para['template_size'], self.json_para['search_size'])
 
 
     def spinBox_start_change(self, x):
-        self.show_preview_img(np.copy(self.IMGS[x]), self.default_template, self.default_search)
+        self.show_preview_img(np.copy(self.IMGS[x]), self.json_para['template_size'], self.json_para['search_size'])
 
     def spinBox_end_change(self, x):
-        self.show_preview_img(np.copy(self.IMGS[x]), self.default_template, self.default_search)
+        self.show_preview_img(np.copy(self.IMGS[x]), self.json_para['template_size'], self.json_para['search_size'])
+
+    def checkBox_Animation_change(self):
+        self.json_para['animation'] = self.checkBox_Animation.isChecked()
+        self.use_json('write')
+
+
+
 
 
     def spinBox_target_frame_chane(self, x):
@@ -810,8 +881,23 @@ class My_MainWindow(QMainWindow, Ui_MainWindow):
         self.textBrowser_target_frame.setText(self.console_text)
 
 
+    def use_json(self, mode='write'):
+        if mode == 'write':
+            with open('setting.json', 'w') as f:
+                print(json.dumps(self.json_para, indent=4), file=f)
+                return None
+        elif mode == 'read':
+            try:
+                with open('setting.json', 'r') as f:
+                    return json.loads(f.read())
+            except:
+                with open('setting_default.json', 'r') as f:
+                    return json.loads(f.read())
+
 
 if __name__ == "__main__":
+
+
     app = QtWidgets.QApplication(sys.argv)
     window = My_MainWindow()
     window.show()

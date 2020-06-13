@@ -1,0 +1,25 @@
+{
+    "path": "D:\\",
+    "method": "correlation_coefficient",
+    "template_size": 32,
+    "search_size": 10,
+    "draw_delay": 20,
+    "video_fps": 20,
+    "delta_x": 0,
+    "delta_y": 0,
+    "animation": true,
+    "auto_save": false,
+    "font": {
+        "show": true,
+        "size": 0.5,
+        "bold": 1
+    },
+    "line": {
+        "bold": 1,
+        "color": {
+            "amount": 10,
+            "saturation": 100,
+            "lightness": 230
+        }
+    }
+}

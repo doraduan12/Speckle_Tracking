@@ -1,0 +1,25 @@
+{
+    "path": "D:/\u4e0b\u8f09/__dicoms/20200121_160513/US00013L",
+    "method": "correlation_coefficient",
+    "template_size": 32,
+    "search_size": 10,
+    "draw_delay": 20,
+    "video_fps": 25,
+    "delta_x": 18.65671641791045,
+    "delta_y": 18.65671641791045,
+    "animation": true,
+    "auto_save": false,
+    "font": {
+        "show": true,
+        "size": 0.5,
+        "bold": 1
+    },
+    "line": {
+        "bold": 1,
+        "color": {
+            "amount": 10,
+            "saturation": 100,
+            "lightness": 230
+        }
+    }
+}

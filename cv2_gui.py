@@ -14,8 +14,11 @@ cv2_tool = Cv2Tools()
 
 class Cv2Line():
 
-    def __init__(self, imgs:np, delta_x: float, delta_y: float, window_name: str,
-                 temp_size: int=32, default_search: int=10, method: str='correlation_coefficient', draw_delay: int=10):
+    def __init__(self, main_textbrowser, imgs:np, delta_x: float, delta_y: float, window_name: str,
+                 temp_size: int, default_search: int, method: str, draw_delay: int, json_para: dict):
+
+        self.main_textbrowser = main_textbrowser
+        self.json_para = json_para
 
         self.IMGS = imgs
         self.window_name = window_name
@@ -40,9 +43,19 @@ class Cv2Line():
 
         # 畫圖顏色
         self.color_index = 0
-        self.num_of_color = 10
-        self.colors = cv2_tool.color_iterater(x=self.num_of_color)
+        self.num_of_color = self.json_para['line']['color']['amount']
+        self.colors = cv2_tool.color_iterater(x=self.num_of_color,
+                                              saturation=self.json_para['line']['color']['saturation'],
+                                              lightness=self.json_para['line']['color']['lightness'])
         self.current_color = self.colors[self.color_index % self.num_of_color]
+
+        # 讀取 json 中 font 與 line 的參數
+        self.font_show = self.json_para['font']['show']
+        self.font_size = self.json_para['font']['size']
+        self.font_bold = self.json_para['font']['bold']
+        self.line_bold = self.json_para['line']['bold']
+
+
 
         # 點相關參數
         self.target_point = []  # -> tuple
@@ -120,12 +133,13 @@ class Cv2Line():
             # 複製目前畫面，在放開滑鼠之前都在複製畫面上作圖，否則會有許多線段互相覆蓋
             temp_img = np.copy(self.img_label[self.current_page])
             # print(self.current_color)
-            cv2.line(temp_img, self.point1, (x, y), self.current_color, thickness=1)
+            cv2.line(temp_img, self.point1, (x, y), self.current_color, thickness=self.line_bold)
 
             # 計算距離、顯示距離的座標
             text_point, d = cv2_tool.count_distance(self.point1, (x, y), self.delta)
             font = cv2.FONT_HERSHEY_SIMPLEX
-            cv2.putText(temp_img, '{:4.3f}{}'.format(d, '(p)' if self.delta_x == 0 else ''), text_point, font, .5, (255, 255, 255), 1)
+            if self.font_show:
+                cv2.putText(temp_img, '{:4.3f}{}'.format(d, '(p)' if self.delta_x == 0 else ''), text_point, font, self.font_size, (255, 255, 255), self.font_bold)
 
             # 刷新畫面
             cv2.imshow(self.window_name, temp_img)
@@ -139,15 +153,16 @@ class Cv2Line():
                 self.point2 = (x, y)
 
                 # 作圖
-                cv2.line(self.img_label[self.current_page], self.point1, self.point2, self.current_color, thickness=1)
+                cv2.line(self.img_label[self.current_page], self.point1, self.point2, self.current_color, thickness=self.line_bold)
                 cv2.circle(self.img_label[self.current_page], self.point1, 0, self.current_color, thickness=2)
                 cv2.circle(self.img_label[self.current_page], self.point2, 0, self.current_color, thickness=2)
 
                 # 計算距離 -> 尚未加入 List
                 text_point, d = cv2_tool.count_distance(self.point1, self.point2, self.delta)
                 font = cv2.FONT_HERSHEY_SIMPLEX
-                cv2.putText(self.img_label[self.current_page], '{:4.3f}{}'.format(d, '(p)' if self.delta_x == 0 else ''), text_point, font, .5,
-                            (255, 255, 255), 1)
+                if self.font_show:
+                    cv2.putText(self.img_label[self.current_page], '{:4.3f}{}'.format(d, '(p)' if self.delta_x == 0 else ''),
+                                text_point, font, self.font_size, (255, 255, 255), self.font_bold)
 
                 # 新增點參數
                 self.target_point.extend([self.point1, self.point2])
@@ -172,6 +187,12 @@ class Cv2Line():
                 # 更新顏色
                 self.color_index += 1
                 self.current_color = self.colors[self.color_index % self.num_of_color]
+
+                # 更新座標
+                points_show = self.main_textbrowser.toPlainText()
+                points_show += f"{self.point1}, {self.point2}\n"
+                self.main_textbrowser.setText(points_show)
+
 
 
         # 設定 Search Window（右鍵點擊時）
@@ -229,15 +250,16 @@ class Cv2Line():
     # 測試時方便建立線段
     def addPoint(self, point1, point2):
         # 作圖
-        cv2.line(self.img_label[self.current_page], point1, point2, self.current_color, thickness=1)
+        cv2.line(self.img_label[self.current_page], point1, point2, self.current_color, thickness=self.line_bold)
         cv2.circle(self.img_label[self.current_page], point1, 2, self.current_color, thickness=-1)
         cv2.circle(self.img_label[self.current_page], point2, 2, self.current_color, thickness=-1)
 
         # 計算距離 -> 尚未加入 List TODO
         text_point, d = cv2_tool.count_distance(point1, point2, self.delta)
         font = cv2.FONT_HERSHEY_SIMPLEX
-        cv2.putText(self.img_label[self.current_page], '{:4.3f}{}'.format(d, '(p)' if self.delta_x == 0 else ''), text_point, font, .5,
-                    (255, 255, 255), 1)
+        if self.font_show:
+            cv2.putText(self.img_label[self.current_page], '{:4.3f}{}'.format(d, '(p)' if self.delta_x == 0 else ''),
+                        text_point, font, self.font_size, (255, 255, 255), self.font_bold)
 
         # 新增點參數
         self.target_point.extend([point1, point2])
@@ -297,9 +319,11 @@ class Cv2Line():
                     p_last = self.result_point[j - 1][i]
 
                     # 畫線、計算（顯示）距離
-                    cv2.line(self.img_label[i], p_last, result, color, thickness=1)
+                    cv2.line(self.img_label[i], p_last, result, color, thickness=self.line_bold)
                     text_point, d = cv2_tool.count_distance(p_last, result, self.delta)
-                    cv2.putText(self.img_label[i], '{:4.3f}{}'.format(d, '(p)' if self.delta_x == 0 else ''), text_point, cv2.FONT_HERSHEY_SIMPLEX, .5, (255, 255, 255), 1)
+                    if self.font_show:
+                        cv2.putText(self.img_label[i], '{:4.3f}{}'.format(d, '(p)' if self.delta_x == 0 else ''), text_point,
+                                    cv2.FONT_HERSHEY_SIMPLEX, self.font_size, (255, 255, 255), self.font_bold)
                     self.result_distance[j//2].append(d)
 
                 if show:
@@ -322,11 +346,12 @@ class Cv2Line():
 
 class Cv2Point():
 
-    def __init__(self, imgs:np, delta_x: float, delta_y: float, window_name: str,
-                 temp_size: int=32, default_search: int=10, method: str='correlation_coefficient', draw_delay: int=10):
+    def __init__(self, main_textbrowser, imgs:np, delta_x: float, delta_y: float, window_name: str,
+                 temp_size: int, default_search: int, method: str, draw_delay: int, json_para: dict):
 
         self.IMGS = imgs
         self.window_name = window_name
+        self.main_textbrowser = main_textbrowser
 
         self.current_page = 0
         self.default_search = default_search
