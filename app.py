@@ -4,6 +4,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
 import matplotlib
+from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 import json
 
 import sys
@@ -18,12 +19,12 @@ from main_window import Ui_MainWindow
 
 from cv2_gui import *
 from tools import GuiTools
+
 gui_tool = GuiTools()
 
 import cgitb
-cgitb.enable( format = 'text')
 
-
+cgitb.enable(format='text')
 
 '''
 20200316 meeting
@@ -35,6 +36,7 @@ cgitb.enable( format = 'text')
 '''
 
 import img.iconQrc
+
 
 # TODO 顏色轉換
 # TODO 重製 temp 與 search 按鈕
@@ -57,12 +59,13 @@ class My_MainWindow(QMainWindow, Ui_MainWindow):
         # add line 隱藏
         self.btn_add_line.hide()
 
+        # 還沒做好的小畫板
+        self.mplwidget_show_curve.hide()
+
         # 讀取記錄檔
         self.json_para = self.use_json('read')
 
         self.setup()
-
-
 
     def setup(self):
 
@@ -80,8 +83,6 @@ class My_MainWindow(QMainWindow, Ui_MainWindow):
 
         self.checkBox_Animation.setChecked(self.json_para['animation'])
 
-
-
         # 初始化防止特定錯誤
         self.filename = ''
         self.cv2_gui = ''
@@ -90,7 +91,6 @@ class My_MainWindow(QMainWindow, Ui_MainWindow):
 
         # 初始化 Console 內容
         self.console_text = ''
-
 
         # 按下 選路徑(btn_path) 按鈕
         self.btn_browse.clicked.connect(self.clicked_btn_path)
@@ -111,6 +111,9 @@ class My_MainWindow(QMainWindow, Ui_MainWindow):
         # 按下 delta 設定 delta
         self.btn_set_delta.clicked.connect(self.clicked_btn_set_delta)
 
+        # 按下 open folder
+        self.btn_open_folder.clicked.connect(self.clicked_btn_open_folder)
+
         # 新增點功能
         self.btn_add_line.clicked.connect(self.clicked_btn_add_line)
 
@@ -130,9 +133,6 @@ class My_MainWindow(QMainWindow, Ui_MainWindow):
         self.radioButton_spline.toggled.connect(self.radio_btn_curve_change)
         self.radioButton_strain.toggled.connect(self.radio_btn_curve_change)
 
-        # 按下全部儲存
-        self.action_save_all_result.triggered.connect(self.action_save_triggered)
-
         # 按下軟體資訊
         self.action_version.triggered.connect(self.action_soft_information)
 
@@ -142,25 +142,36 @@ class My_MainWindow(QMainWindow, Ui_MainWindow):
         # 按下 open setting file
         self.action_open_setting_file.triggered.connect(self.action_open_setting_triggered)
 
+        # 按下 open saved points
+        self.action_open_saved_points.triggered.connect(self.action_open_saved_points_triggered)
+
         # 設定更新頁數的 spinbox 動作
         self.spinBox_start.valueChanged.connect(self.spinBox_start_change)
         self.spinBox_end.valueChanged.connect(self.spinBox_end_change)
 
         # 按下 animation -> 更新 json 設定檔
         self.checkBox_Animation.clicked.connect(self.checkBox_Animation_change)
+        self.checkBox_auto_save.clicked.connect(self.checkBox_auto_save_change)
 
         #################### 額外控制功能的動作 ####################
+
+        # 按下 auto integral，更改 target frame 的屬性（可調 / 不可調）
+        self.checkBox_auto_integral.clicked.connect(self.checkBox_auto_integral_change)
+
+        # 更新 integral ratio 與 integral line 的動作
+        self.spinBox_integral_line.valueChanged.connect(self.spinBox_integral_change)
+        self.spinBox_integral_ratio.valueChanged.connect(self.spinBox_integral_change)
 
         # 變更 spin target frame 時，更新參考點
         self.spinBox_target_frame.valueChanged.connect(self.spinBox_target_frame_chane)
 
-
-
+        # 記錄點
+        self.btn_save_points.clicked.connect(self.clicked_btn_save_points)
 
     # 按下 選路徑(btn_path) 按鈕的動作
     @pyqtSlot()
     def clicked_btn_path(self):
-        files, filetype = QFileDialog.getOpenFileNames(self,  "選擇文件", self.default_path, # 起始路径
+        files, filetype = QFileDialog.getOpenFileNames(self, "選擇文件", self.default_path,  # 起始路径
                                                        "All Files (*);;Dicom Files (*.dcm);;Png Files (*.png);;JPEG Files (*.jpeg)")
 
         # 如果有讀到檔案
@@ -171,10 +182,10 @@ class My_MainWindow(QMainWindow, Ui_MainWindow):
             self.use_json('write')
 
             # 副檔名
-            extension = os.path.splitext(files[0])[-1].lower()
+            self.extension = os.path.splitext(files[0])[-1].lower()
 
             # 如果讀取到 Dicom 檔
-            if extension == '.dcm':
+            if self.extension == '.dcm':
                 file = files[0]
                 browse_path = file
                 self.default_path, self.default_filename = os.path.split(browse_path)
@@ -188,24 +199,23 @@ class My_MainWindow(QMainWindow, Ui_MainWindow):
 
                 filetype = '.dcm'
 
-                date, time = '', ''
+                self.date, self.time = '', ''
 
                 # 讀取 dicom 的日期
                 if 'InstanceCreationDate' in dir(dicom):
-                    date = dicom.InstanceCreationDate
-                    date = datetime.date(int(date[:4]), int(date[4:6]), int(date[6:]))
+                    self.date = dicom.InstanceCreationDate
+                    self.date = datetime.date(int(self.date[:4]), int(self.date[4:6]), int(self.date[6:]))
                 elif 'StudyDate' in dir(dicom):
-                    date = dicom.StudyDate
-                    date = datetime.date(int(date[:4]), int(date[4:6]), int(date[6:]))
+                    self.date = dicom.StudyDate
+                    self.date = datetime.date(int(self.date[:4]), int(self.date[4:6]), int(self.date[6:]))
 
                 # 讀取 dicom 的時間
                 if 'InstanceCreationTime' in dir(dicom):
-                    time = dicom.InstanceCreationTime
-                    time = datetime.time(int(time[:2]), int(time[2:4]), int(time[4:]))
+                    self.time = dicom.InstanceCreationTime
+                    self.time = datetime.time(int(self.time[:2]), int(self.time[2:4]), int(self.time[4:]))
                 elif 'StudyTime' in dir(dicom):
-                    time = dicom.StudyTime
-                    time = datetime.time(int(time[:2]), int(time[2:4]), int(time[4:]))
-
+                    self.time = dicom.StudyTime
+                    self.time = datetime.time(int(self.time[:2]), int(self.time[2:4]), int(self.time[4:]))
 
                 # 讀取 dicom 中 儀器廠商
                 if 'ManufacturerModelName' in dir(dicom) and 'Manufacturer' in dir(dicom):
@@ -216,7 +226,6 @@ class My_MainWindow(QMainWindow, Ui_MainWindow):
                     system_name = dicom.ManufacturerModelName
                 else:
                     system_name = ''
-
 
                 # 讀取 dicom 的 delta x, delta y
                 if 'SequenceOfUltrasoundRegions' in dir(dicom):
@@ -233,7 +242,6 @@ class My_MainWindow(QMainWindow, Ui_MainWindow):
                 else:
                     deltax, deltay = self.json_para['delta_x'], self.json_para['delta_y']
 
-
                 # 讀取 dicom 的 fps
                 if 'RecommendedDisplayFrameRate' in dir(dicom):
                     self.json_para['video_fps'] = dicom.RecommendedDisplayFrameRate
@@ -242,7 +250,7 @@ class My_MainWindow(QMainWindow, Ui_MainWindow):
 
 
             # 如果讀到圖檔
-            elif extension == '.png' or extension =='.jpg' or extension == '.jpeg' or extension == '.mp4':
+            elif self.extension == '.png' or self.extension == '.jpg' or self.extension == '.jpeg' or self.extension == '.mp4':
 
                 browse_path = os.path.split(files[0])[0]
                 self.filename = os.path.split(browse_path)[-1]
@@ -251,7 +259,7 @@ class My_MainWindow(QMainWindow, Ui_MainWindow):
                 self.default_path = os.path.split(browse_path)[0]
                 self.default_filename = self.filename
 
-                if extension == '.mp4':
+                if self.extension == '.mp4':
                     self.filename = os.path.splitext(os.path.split(files[0])[-1])[0]
                     capture = cv2.VideoCapture(files[0])
                     ret, frame = capture.read()
@@ -259,7 +267,6 @@ class My_MainWindow(QMainWindow, Ui_MainWindow):
                     while ret:
                         IMGS.append(frame)
                         ret, frame = capture.read()
-
 
                     capture.release()
                     self.IMGS = np.asarray(IMGS)
@@ -271,7 +278,8 @@ class My_MainWindow(QMainWindow, Ui_MainWindow):
                     temp = np.argsort(temp)
                     files = files[temp]
 
-                    self.IMGS = gui_tool.add_page(np.asarray([cv2.imdecode(np.fromfile(file, dtype=np.uint8), -1) for file in files]))
+                    self.IMGS = gui_tool.add_page(
+                        np.asarray([cv2.imdecode(np.fromfile(file, dtype=np.uint8), -1) for file in files]))
                     if np.ndim(self.IMGS) == 3:
                         self.IMGS = cv2.merge([self.IMGS, self.IMGS, self.IMGS])
 
@@ -280,10 +288,9 @@ class My_MainWindow(QMainWindow, Ui_MainWindow):
 
                 filetype = '.' + files[0].split('.')[-1]
 
-                date, time, system_name = '', '', ''
+                self.date, self.time, system_name = '', '', ''
 
                 deltax, deltay = self.json_para['delta_x'], self.json_para['delta_y']
-
 
 
             # 如果讀入檔案不是 dicom 或是 圖檔
@@ -296,7 +303,6 @@ class My_MainWindow(QMainWindow, Ui_MainWindow):
                 msg.exec_()
                 return
 
-
             # 寫入 檔案路徑
             self.textBrowser_browse.setText(browse_path)
 
@@ -308,8 +314,8 @@ class My_MainWindow(QMainWindow, Ui_MainWindow):
             # 寫入 file detail 內容
             self.label_filetype_show.setText(filetype)
             self.label_image_size_show.setText(str(self.w) + ' x ' + str(self.h))
-            self.label_date_show.setText(str(date))
-            self.label_time_show.setText(str(time))
+            self.label_date_show.setText(str(self.date))
+            self.label_time_show.setText(str(self.time))
             self.label_frame_show.setText(str(self.num_of_img))
 
             # 更新 josn 參數
@@ -324,9 +330,9 @@ class My_MainWindow(QMainWindow, Ui_MainWindow):
 
             # 預設的 template block 與 search window
             self.spinBox_temp_size.setValue(self.json_para['template_size'])
-            self.spinBox_temp_size.setRange(1, self.h//2)
+            self.spinBox_temp_size.setRange(1, self.h // 2)
             self.spinBox_search_range.setValue(self.json_para['search_size'])
-            self.spinBox_search_range.setRange(1, self.h//2)
+            self.spinBox_search_range.setRange(1, self.h // 2)
 
             # 預設的 draw delay
             self.default_draw_delay = self.json_para['draw_delay']
@@ -334,16 +340,29 @@ class My_MainWindow(QMainWindow, Ui_MainWindow):
             self.spinBox_drawing_delay.setRange(1, 100)
 
             # 建立預覽圖片、自適化調整
-            self.show_preview_img(np.copy(self.img_preview), self.json_para['template_size'], self.json_para['search_size'])
+            self.show_preview_img(np.copy(self.img_preview), self.json_para['template_size'],
+                                  self.json_para['search_size'])
 
             # 預設上下限與初始頁數
-            self.spinBox_start.setRange(0, self.num_of_img-1)
-            self.spinBox_end.setRange(0, self.num_of_img-1)
+            self.spinBox_start.setRange(0, self.num_of_img - 1)
+            self.spinBox_end.setRange(0, self.num_of_img - 1)
             self.spinBox_start.setValue(0)
-            self.spinBox_end.setValue(self.num_of_img-1)
+            self.spinBox_end.setValue(self.num_of_img - 1)
 
             #################### 額外控制功能的動作 ####################
             self.spinBox_target_frame.setRange(0, self.num_of_img - 1)
+
+            # 清空 points
+            self.textBrowser_labeled_points.setText('')
+            self.textBrowser_auto_add_point.setText('')
+
+            with open('saved_points.json', 'r') as f:
+                saved_points = json.loads(f.read())
+                name = os.path.split(self.json_para['path'])[-1] + '_' + str(self.date) + '_' +self.filename + self.extension
+                if name in saved_points.keys():
+                    self.textBrowser_auto_add_point.setText(saved_points[name])
+
+
 
 
         # 如果沒有選擇檔案的話
@@ -382,10 +401,9 @@ class My_MainWindow(QMainWindow, Ui_MainWindow):
         elif self.radioButton_Optical.isChecked():
             self.json_para['method'] = 'optical_flow'
 
-
         # 呼叫 cv2 GUI class 的參數
         kwargs = {
-            'main_textbrowser': self.textBrowser_labeled_points,
+            'main_window': self,
             'imgs': self.IMGS[self.start:self.end:, :, :],
             'window_name': self.filename,
             'delta_x': float(self.doubleSpinBox_delta_x.value()) / 1000,
@@ -396,7 +414,6 @@ class My_MainWindow(QMainWindow, Ui_MainWindow):
             'draw_delay': int(self.spinBox_drawing_delay.value()),
             'json_para': self.json_para
         }
-
 
         # 設定模式
         if self.radioButton_line.isChecked():
@@ -409,19 +426,25 @@ class My_MainWindow(QMainWindow, Ui_MainWindow):
             # (326, 123), (329, 184)
             # (342, 105), (368, 179)
             add_points = self.textBrowser_auto_add_point.toPlainText()
+            self.textBrowser_labeled_points.setText(add_points)
             if add_points != '':
                 try:
-                    add_points = add_points.replace('(', '').replace(')', '').replace(' ', '').split("\n")
-                    for point in add_points:
-                        x1, y1, x2, y2 = point.split(',')
+                    add_points = add_points.replace('(', '').replace(')', '').replace(' ', '').replace('\n', '').split(
+                        ',')
+                    for i in range(0, len(add_points), 4):
+                        # for point in add_points:
+                        x1, y1, x2, y2 = add_points[i], add_points[i + 1], add_points[i + 2], add_points[i + 3]
                         x1, y1, x2, y2 = int(x1), int(y1), int(x2), int(y2)
                         self.cv2_gui.addPoint((x1, y1), (x2, y2))
-                except:
+                        # 如果下次的四個點無法算完
+                        if i + 8 > len(add_points): break
+
+                except Exception as e:
                     print("###########################\n"
                           "# 輸入點的格式錯誤，應為：\n"
-                          "# (288, 114), (266, 194)\n"
-                          "# (326, 123), (329, 184)\n"
-                          "# (342, 105), (368, 179)\n"
+                          "# (288, 114), (266, 194),\n"
+                          "# (326, 123), (329, 184),\n"
+                          "# (342, 105), (368, 179),\n"
                           "###########################")
 
 
@@ -445,6 +468,8 @@ class My_MainWindow(QMainWindow, Ui_MainWindow):
             if action == 'reset':
                 # 清除 strain curve 圖片
                 self.textBrowser_labeled_points.clear()
+                self.textBrowser_auto_add_point.clear()
+                self.textBrowser_target_frame.clear()
                 self.label_show_curve.setPixmap(QtGui.QPixmap(""))
                 self.cv2_gui.reset()
 
@@ -456,7 +481,12 @@ class My_MainWindow(QMainWindow, Ui_MainWindow):
                 print('Speckle Tracking costs {} seconds.\n'.format(t2 - t1))
 
                 if self.mode == 'line':
+                    # 畫 curve
                     self.plot_strain_curve()
+
+                    # 自動存檔？
+                    if self.checkBox_auto_save.isChecked():
+                        self.auto_save_files()
 
                     # 顯示資料在 console
                     target_frame = int(self.spinBox_target_frame.text())
@@ -475,19 +505,11 @@ class My_MainWindow(QMainWindow, Ui_MainWindow):
                 elif self.mode == 'point':
                     pass
 
-
             # 「t」 增加預設點數（測試時用）
             if action == 'test':
-                print(f"self.cv2_gui.result_strain :\n{self.cv2_gui.result_strain}")
-                cumsum = {}
-                for k in self.cv2_gui.result_strain.keys():
-                    cumsum[k] = np.cumsum(np.abs(self.cv2_gui.result_strain[k]))
+                pass
 
-                print(f"cumsum :\n{cumsum}")
                 # print(f"self.cv2_gui.result_distance :\n{self.cv2_gui.result_distance}")
-
-
-
 
             # 按空白鍵查看點數狀況
             if action == 'space':
@@ -495,19 +517,20 @@ class My_MainWindow(QMainWindow, Ui_MainWindow):
 
                 print('self.target_point : ', self.cv2_gui.target_point)
                 print('self.track_done : ', self.cv2_gui.track_done)
-                print('self.search_point : ', self.cv2_gui.search_point) # 目前沒用
+                print('self.search_point : ', self.cv2_gui.search_point)  # 目前沒用
                 print('self.search_shift : ', self.cv2_gui.search_shift)
                 print('self.result_points: ', self.cv2_gui.result_point)
                 print()
 
         cv2.destroyWindow(self.cv2_gui.window_name)  # （按 esc 跳出迴圈後）關閉視窗
 
-
     def plot_strain_curve(self):
         # 開始繪圖
         plt.figure()
-        plt.axhline(0, color='k', alpha=0.2)
+        # figure = self.mplwidget_show_curve.canvas.figure.add_subplot(111)
+
         plt.xlabel('frame')
+        # figure.set_xlabel('frame')
 
         for i in self.cv2_gui.result_distance.keys():
 
@@ -515,33 +538,46 @@ class My_MainWindow(QMainWindow, Ui_MainWindow):
             color = tuple([self.cv2_gui.colors[i % self.cv2_gui.num_of_color][-j] / 255 for j in range(1, 4)])
 
             if self.radioButton_strain.isChecked():
+                plt.axhline(0, color='k', alpha=0.2)
+                # figure.axhline(0, color='k', alpha=0.2)
                 if self.radioButton_spline.isChecked():
-                    plt.plot([i for i in range(self.start, self.end)], gui_tool.lsq_spline_medain(self.cv2_gui.result_strain[i]), color=color)
+                    plt.plot([i for i in range(self.start, self.end)],
+                             gui_tool.lsq_spline_medain(self.cv2_gui.result_strain[i]), color=color)
+                    # figure.plot([i for i in range(self.start, self.end)], gui_tool.lsq_spline_medain(self.cv2_gui.result_strain[i]), color=color)
                 elif self.radioButton_original.isChecked():
                     plt.plot([i for i in range(self.start, self.end)], self.cv2_gui.result_strain[i], color=color)
+                    # figure.plot([i for i in range(self.start, self.end)], self.cv2_gui.result_strain[i], color=color)
 
                 plt.ylabel('Strain')
+                # figure.set_ylabel('Strain')
                 plt.title('Strain curve')
+                # figure.set_title('Strain curve')
 
             elif self.radioButton_distance.isChecked():
                 if self.radioButton_spline.isChecked():
-                    plt.plot([i for i in range(self.start, self.end)], gui_tool.lsq_spline_medain(self.cv2_gui.result_distance[i]), color=color)
+                    plt.plot([i for i in range(self.start, self.end)],
+                             gui_tool.lsq_spline_medain(self.cv2_gui.result_distance[i]), color=color)
+                    # figure.plot([i for i in range(self.start, self.end)], gui_tool.lsq_spline_medain(self.cv2_gui.result_distance[i]), color=color)
                 elif self.radioButton_original.isChecked():
                     plt.plot([i for i in range(self.start, self.end)], self.cv2_gui.result_distance[i], color=color)
+                    # figure.plot([i for i in range(self.start, self.end)], self.cv2_gui.result_distance[i], color=color)
 
                 plt.ylabel('Distance')
+                # figure.set_ylabel('Distance')
                 plt.title('Distance curve')
+                # figure.set_title('Distance curve')
 
+        # self.mplwidget_show_curve.canvas.draw()
         plt.savefig(self.default_path + '/output.png')
         plt.close()
 
-        self.result_curve_temp = cv2.imdecode(np.fromfile(self.default_path + '/output.png', dtype=np.uint8), -1)   # 解決中文路徑問題
+        self.result_curve_temp = cv2.imdecode(np.fromfile(self.default_path + '/output.png', dtype=np.uint8),
+                                              -1)  # 解決中文路徑問題
         # self.result_curve_temp = cv2.imread(self.default_path + '/output.png') # 中文路徑會報錯
         os.remove(self.default_path + '/output.png')
 
         self.label_show_curve.setPixmap(QtGui.QPixmap(gui_tool.convert2qtimg(self.result_curve_temp)))
         self.label_show_curve.setScaledContents(True)
-
 
     def clicked_btn_set_delta(self):
         if not self.filename:
@@ -557,26 +593,22 @@ class My_MainWindow(QMainWindow, Ui_MainWindow):
 
             cv2.destroyWindow(set_delta.window_name)
             dy = abs(set_delta.point2[1] - set_delta.point1[1])
-            self.json_para['delta_x'] = 1000*input_dy/dy
-            self.json_para['delta_y'] = 1000*input_dy/dy
+            self.json_para['delta_x'] = 1000 * input_dy / dy
+            self.json_para['delta_y'] = 1000 * input_dy / dy
             self.doubleSpinBox_delta_x.setValue(self.json_para['delta_y'])
             self.doubleSpinBox_delta_y.setValue(self.json_para['delta_y'])
-
 
     def clicked_btn_add_line(self):
         if not self.filename:
             return
 
-        x1, okPressed = QInputDialog.getInt(self, "Add line", "x1:", 0, 0, self.w-1, 1)
-        if okPressed: y1, okPressed = QInputDialog.getInt(self, "Add line", "y1:", 0, 0, self.h-1, 1)
-        if okPressed: x2, okPressed = QInputDialog.getInt(self, "Add line", "x2:", 0, 0, self.w-1, 1)
-        if okPressed: y2, okPressed = QInputDialog.getInt(self, "Add line", "y2:", 0, 0, self.h-1, 1)
+        x1, okPressed = QInputDialog.getInt(self, "Add line", "x1:", 0, 0, self.w - 1, 1)
+        if okPressed: y1, okPressed = QInputDialog.getInt(self, "Add line", "y1:", 0, 0, self.h - 1, 1)
+        if okPressed: x2, okPressed = QInputDialog.getInt(self, "Add line", "x2:", 0, 0, self.w - 1, 1)
+        if okPressed: y2, okPressed = QInputDialog.getInt(self, "Add line", "y2:", 0, 0, self.h - 1, 1)
         if not okPressed: return
 
         self.cv2_gui.addPoint((x1, y1), (x2, y2))
-
-
-
 
     # TODO 待修正
     @pyqtSlot()
@@ -585,7 +617,9 @@ class My_MainWindow(QMainWindow, Ui_MainWindow):
             return
 
         # 將圖片從 YBR 轉成 BGR 通道
-        self.IMGS = np.asarray([cv2.cvtColor(pydicom.pixel_data_handlers.util.convert_color_space(img, 'YBR_FULL', 'RGB'), cv2.COLOR_RGB2BGR) for img in self.IMGS])
+        self.IMGS = np.asarray([cv2.cvtColor(
+            pydicom.pixel_data_handlers.util.convert_color_space(img, 'YBR_FULL', 'RGB'), cv2.COLOR_RGB2BGR) for img in
+                                self.IMGS])
         self.img_preview = self.IMGS[0]
 
         # 建立預覽圖片、自適化調整
@@ -597,11 +631,14 @@ class My_MainWindow(QMainWindow, Ui_MainWindow):
         if not self.filename or not self.cv2_gui:
             return
 
-        fps, okPressed = QInputDialog.getInt(self, "Set output video FPS", "FPS:", self.json_para['video_fps'], 1, 10000, 1)
+        fps, okPressed = QInputDialog.getInt(self, "Set output video FPS", "FPS:", self.json_para['video_fps'], 1,
+                                             10000, 1)
         if okPressed == False:
             return
 
-        path, filetype = QFileDialog.getSaveFileName(self, "文件保存", self.default_path + '/' + self.default_filename + '.mp4', "All Files (*);;MP4 Files (*.mp4)")
+        path, filetype = QFileDialog.getSaveFileName(self, "文件保存",
+                                                     self.default_path + '/' + self.default_filename + '.mp4',
+                                                     "All Files (*);;MP4 Files (*.mp4)")
 
         # 如果沒有選擇存檔路徑，結束 function
         if not path:
@@ -609,7 +646,6 @@ class My_MainWindow(QMainWindow, Ui_MainWindow):
 
         self.json_para['video_fps'] = fps
         self.use_json('write')
-
 
         # 強制轉換副檔名為 mp4
         filename = os.path.split(path)[-1]
@@ -623,7 +659,6 @@ class My_MainWindow(QMainWindow, Ui_MainWindow):
         for img in self.cv2_gui.img_label:
             videowriter.write(img)
         videowriter.release()
-
 
         # 通知視窗
         msg = QMessageBox()
@@ -640,13 +675,14 @@ class My_MainWindow(QMainWindow, Ui_MainWindow):
         if reply == 0:
             os.startfile(os.path.split(path)[0])
 
-
     # 儲存成 CSV 檔案
     def clicked_btn_save_csv(self):
         # 如果尚未選擇影像，或是尚未運行 cv2，不運行按鈕
         if not self.filename or not self.cv2_gui:
             return
-        path, filetype = QFileDialog.getSaveFileName(self, "文件保存", self.default_path + '/' + self.default_filename + '.csv', "All Files (*);;CSV Files (*.csv)")
+        path, filetype = QFileDialog.getSaveFileName(self, "文件保存",
+                                                     self.default_path + '/' + self.default_filename + '.csv',
+                                                     "All Files (*);;CSV Files (*.csv)")
 
         # 如果沒有選擇存檔路徑，結束 function
         if not path:
@@ -684,7 +720,9 @@ class My_MainWindow(QMainWindow, Ui_MainWindow):
         if not self.filename or not self.cv2_gui:
             return
 
-        path, filetype = QFileDialog.getSaveFileName(self, "文件保存", self.default_path + '/' + self.default_filename + '.png', "All Files (*);;PNG Files (*.png)")
+        path, filetype = QFileDialog.getSaveFileName(self, "文件保存",
+                                                     self.default_path + '/' + self.default_filename + '.png',
+                                                     "All Files (*);;PNG Files (*.png)")
 
         # 如果沒有選擇存檔路徑，結束 function
         if not path:
@@ -709,13 +747,12 @@ class My_MainWindow(QMainWindow, Ui_MainWindow):
         if reply == 0:
             os.startfile(os.path.split(path)[0])
 
-
     # 儲存所有結果
-    def action_save_triggered(self):
+    def auto_save_files(self):
         if not self.filename or not self.cv2_gui:
             return
 
-        path, filetype = QFileDialog.getSaveFileName(self, "文件保存", self.default_path + '/' + self.default_filename + '.all', "All Files (*)")
+        path = self.default_path + '/' + self.default_filename + '.all'
 
         # 如果沒有選擇存檔路徑，結束 function
         if not path:
@@ -732,7 +769,6 @@ class My_MainWindow(QMainWindow, Ui_MainWindow):
             videowriter.write(img)
         videowriter.release()
 
-
         # 儲存 csv
         select_df = pd.DataFrame(self.cv2_gui.result_point)
         select_df.columns = ['Point {}'.format(i) for i in select_df.columns]
@@ -744,26 +780,9 @@ class My_MainWindow(QMainWindow, Ui_MainWindow):
                 select_df.insert(i * 4 + 3, 'Strain {} -> {}'.format(i * 2, i * 2 + 1), s)
 
             # 儲存 curve
-            cv2.imencode('.png', self.result_curve_temp)[1].tofile(path+'.png')
+            cv2.imencode('.png', self.result_curve_temp)[1].tofile(path + '.png')
 
         select_df.to_csv(path + '.csv', index=True, sep=',')
-
-
-        # 通知視窗
-        msg = QMessageBox()
-        msg.setWindowTitle('Save completed.')
-        msg.setIcon(QMessageBox.Information)
-        msg.setText('Result saved finish.\n')
-
-        Open = msg.addButton('Show in explorer', QMessageBox.AcceptRole)
-        Ok = msg.addButton('OK', QMessageBox.DestructiveRole)
-        msg.setDefaultButton(Ok)
-        reply = msg.exec()
-
-        # 如果選擇開啟資料夾，則運行
-        if reply == 0:
-            os.startfile(os.path.split(path)[0])
-
 
     def action_soft_information(self):
         msg = QMessageBox()
@@ -775,7 +794,6 @@ class My_MainWindow(QMainWindow, Ui_MainWindow):
             'Website: https://github.com/Yuwen0810/Speckle_Tracking\n'
         )
         reply = msg.exec()
-
 
     # Reset Setting
     def action_reset_setting_triggered(self):
@@ -795,6 +813,10 @@ class My_MainWindow(QMainWindow, Ui_MainWindow):
     def action_open_setting_triggered(self):
         os.startfile(os.path.join(os.getcwd(), 'setting.json'))
 
+    # Open Saved points file
+    def action_open_saved_points_triggered(self):
+        os.startfile(os.path.join(os.getcwd(), 'saved_points.json'))
+
 
     def radio_btn_line_change(self):
         if self.radioButton_line.isChecked():
@@ -802,15 +824,12 @@ class My_MainWindow(QMainWindow, Ui_MainWindow):
         else:
             self.stackedWidget_mode.setCurrentIndex(1)
 
-
-
     def radio_btn_curve_change(self):
         if not self.filename or not self.cv2_gui:
             return
 
         if self.mode == 'line':
             self.plot_strain_curve()
-
 
     # 更改
     def slide_change(self):
@@ -821,18 +840,18 @@ class My_MainWindow(QMainWindow, Ui_MainWindow):
         self.img_preview = self.IMGS[self.horizontalSlider_preview.value()]
         self.show_preview_img(np.copy(self.img_preview), self.json_para['template_size'], self.json_para['search_size'])
 
-
     # 顯示預覽影像、自適化調整
     def show_preview_img(self, img, temp, search):
-        x, y = self.w//2, self.h//2
+        x, y = self.w // 2, self.h // 2
 
-        t_shift = temp//2
-        s_shift = search//2
+        t_shift = temp // 2
+        s_shift = search // 2
 
         cv2.circle(img, (x, y), 1, (0, 0, 255), -1)
 
-        cv2.rectangle(img, (x-s_shift, y-s_shift), (x+s_shift, y+s_shift), (0, 0, 255), 1)
-        cv2.rectangle(img, (x-s_shift-t_shift, y-s_shift-t_shift), (x-s_shift+t_shift, y-s_shift+t_shift), (255, 255, 0), 1)
+        cv2.rectangle(img, (x - s_shift, y - s_shift), (x + s_shift, y + s_shift), (0, 0, 255), 1)
+        cv2.rectangle(img, (x - s_shift - t_shift, y - s_shift - t_shift),
+                      (x - s_shift + t_shift, y - s_shift + t_shift), (255, 255, 0), 1)
 
         self.label_preview.setPixmap(QtGui.QPixmap(gui_tool.convert2qtimg(img)))
         self.label_preview.setScaledContents(True)
@@ -848,7 +867,6 @@ class My_MainWindow(QMainWindow, Ui_MainWindow):
         self.json_para['search_size'] = x
         self.show_preview_img(np.copy(self.img_preview), self.json_para['template_size'], self.json_para['search_size'])
 
-
     def spinBox_start_change(self, x):
         self.show_preview_img(np.copy(self.IMGS[x]), self.json_para['template_size'], self.json_para['search_size'])
 
@@ -859,9 +877,41 @@ class My_MainWindow(QMainWindow, Ui_MainWindow):
         self.json_para['animation'] = self.checkBox_Animation.isChecked()
         self.use_json('write')
 
+    def checkBox_auto_save_change(self):
+        self.json_para['auto_save'] = self.checkBox_auto_save.isChecked()
+        self.use_json('write')
 
+    def checkBox_auto_integral_change(self):
+        if self.checkBox_auto_integral.isChecked():
+            self.spinBox_target_frame.setReadOnly(True)
+        else:
+            self.spinBox_target_frame.setReadOnly(False)
 
+    def spinBox_integral_change(self):
+        if self.checkBox_auto_integral.isChecked() == False:
+            return
 
+        target_line = self.spinBox_integral_line.value()
+        ratio = self.spinBox_integral_ratio.value() / 100
+
+        cumsum = np.cumsum(np.abs(self.cv2_gui.result_distance[target_line - 1]))
+        thre = cumsum[-1] * ratio
+        closer = np.argmin(np.abs(cumsum - thre))
+
+        self.spinBox_target_frame.setValue(closer)
+
+    def clicked_btn_save_points(self):
+        with open('./saved_points.json', 'r') as f:
+            saved_points = json.loads(f.read())
+
+        name = os.path.split(self.json_para['path'])[-1] + '_' + str(self.date) + '_' +self.filename + self.extension
+        saved_points[name] = self.textBrowser_labeled_points.toPlainText()
+
+        with open('./saved_points.json', 'w') as f:
+            print(json.dumps(saved_points, indent=4), file=f)
+
+    def clicked_btn_open_folder(self):
+        os.startfile(self.default_path)
 
     def spinBox_target_frame_chane(self, x):
         if not self.cv2_gui:
@@ -880,7 +930,6 @@ class My_MainWindow(QMainWindow, Ui_MainWindow):
 
         self.textBrowser_target_frame.setText(self.console_text)
 
-
     def use_json(self, mode='write'):
         if mode == 'write':
             with open('setting.json', 'w') as f:
@@ -896,8 +945,6 @@ class My_MainWindow(QMainWindow, Ui_MainWindow):
 
 
 if __name__ == "__main__":
-
-
     app = QtWidgets.QApplication(sys.argv)
     window = My_MainWindow()
     window.show()

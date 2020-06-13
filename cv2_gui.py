@@ -14,10 +14,10 @@ cv2_tool = Cv2Tools()
 
 class Cv2Line():
 
-    def __init__(self, main_textbrowser, imgs:np, delta_x: float, delta_y: float, window_name: str,
+    def __init__(self, main_window, imgs:np, delta_x: float, delta_y: float, window_name: str,
                  temp_size: int, default_search: int, method: str, draw_delay: int, json_para: dict):
 
-        self.main_textbrowser = main_textbrowser
+        self.main_window = main_window
         self.json_para = json_para
 
         self.IMGS = imgs
@@ -40,6 +40,7 @@ class Cv2Line():
 
         self.img_label = np.copy(self.IMGS)
         self.num_of_img, self.h, self.w = self.IMGS.shape[:3]
+        self.num_of_line = 0
 
         # 畫圖顏色
         self.color_index = 0
@@ -81,6 +82,10 @@ class Cv2Line():
         self.img_label = np.copy(self.IMGS)
         cv2.imshow(self.window_name, self.img_label[self.current_page])
 
+        # 積分的 num of line 重製
+        self.main_window.spinBox_integral_line.setRange(0, 0)
+
+        self.num_of_line = 0
         self.color_index = 0
         self.current_color = self.colors[self.color_index % self.num_of_color]
         self.target_point = []
@@ -189,9 +194,11 @@ class Cv2Line():
                 self.current_color = self.colors[self.color_index % self.num_of_color]
 
                 # 更新座標
-                points_show = self.main_textbrowser.toPlainText()
-                points_show += f"{self.point1}, {self.point2}\n"
-                self.main_textbrowser.setText(points_show)
+                points_show = self.main_window.textBrowser_labeled_points.toPlainText()
+                points_show += f"{self.point1}, {self.point2},\n"
+                self.main_window.textBrowser_labeled_points.setText(points_show)
+
+
 
 
 
@@ -293,6 +300,8 @@ class Cv2Line():
             # 如果該點完成，跳過該點
             if done: continue
 
+            if j%2 == 1: self.num_of_line += 1 # 更新 計算機分線條的上限
+
             finish_already = False
             self.track_done[j] = True
             self.result_point[j] = [tp]
@@ -315,6 +324,8 @@ class Cv2Line():
 
                 # 若運算的點為直線的第二端，開始畫線
                 if j % 2 == 1:
+
+
                     # 抓出前次結果的點
                     p_last = self.result_point[j - 1][i]
 
@@ -331,6 +342,9 @@ class Cv2Line():
 
             self.show_progress_bar(np.copy(self.img_label[0]), progress_fraction, progress_denominator)
 
+        # 更新 計算機分線條的上限
+        self.main_window.spinBox_integral_line.setRange(1, self.num_of_line)
+
         cv2.imshow(self.window_name, self.img_label[0])
         cv2.waitKey(1)
 
@@ -346,12 +360,12 @@ class Cv2Line():
 
 class Cv2Point():
 
-    def __init__(self, main_textbrowser, imgs:np, delta_x: float, delta_y: float, window_name: str,
+    def __init__(self, main_window, imgs:np, delta_x: float, delta_y: float, window_name: str,
                  temp_size: int, default_search: int, method: str, draw_delay: int, json_para: dict):
 
         self.IMGS = imgs
         self.window_name = window_name
-        self.main_textbrowser = main_textbrowser
+        self.main_window = main_window
 
         self.current_page = 0
         self.default_search = default_search

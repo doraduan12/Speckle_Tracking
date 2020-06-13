@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>836</width>
-    <height>874</height>
+    <width>1179</width>
+    <height>873</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -1298,7 +1298,7 @@
       <rect>
        <x>80</x>
        <y>30</y>
-       <width>231</width>
+       <width>295</width>
        <height>32</height>
       </rect>
      </property>
@@ -1356,8 +1356,8 @@
     <property name="geometry">
      <rect>
       <x>850</x>
-      <y>50</y>
-      <width>301</width>
+      <y>80</y>
+      <width>311</width>
       <height>171</height>
      </rect>
     </property>
@@ -1393,7 +1393,7 @@
      <enum>Qt::AutoText</enum>
     </property>
     <property name="alignment">
-     <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+     <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
     </property>
    </widget>
    <widget class="QSpinBox" name="spinBox_target_frame">
@@ -1419,7 +1419,7 @@
     <property name="geometry">
      <rect>
       <x>850</x>
-      <y>250</y>
+      <y>280</y>
       <width>151</width>
       <height>21</height>
      </rect>
@@ -1444,8 +1444,8 @@
     <property name="geometry">
      <rect>
       <x>850</x>
-      <y>280</y>
-      <width>301</width>
+      <y>310</y>
+      <width>311</width>
       <height>171</height>
      </rect>
     </property>
@@ -1466,7 +1466,7 @@
     <property name="geometry">
      <rect>
       <x>850</x>
-      <y>480</y>
+      <y>510</y>
       <width>151</width>
       <height>21</height>
      </rect>
@@ -1491,8 +1491,8 @@
     <property name="geometry">
      <rect>
       <x>850</x>
-      <y>510</y>
-      <width>301</width>
+      <y>540</y>
+      <width>311</width>
       <height>171</height>
      </rect>
     </property>
@@ -1509,6 +1509,170 @@
      <bool>false</bool>
     </property>
    </widget>
+   <widget class="QSpinBox" name="spinBox_integral_ratio">
+    <property name="geometry">
+     <rect>
+      <x>960</x>
+      <y>50</y>
+      <width>61</width>
+      <height>22</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <family>Calibri</family>
+      <pointsize>10</pointsize>
+     </font>
+    </property>
+    <property name="maximum">
+     <number>100</number>
+    </property>
+   </widget>
+   <widget class="QLabel" name="label_integral_ratio">
+    <property name="geometry">
+     <rect>
+      <x>900</x>
+      <y>50</y>
+      <width>51</width>
+      <height>21</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <family>Calibri</family>
+      <pointsize>10</pointsize>
+     </font>
+    </property>
+    <property name="text">
+     <string>Ratio:</string>
+    </property>
+    <property name="textFormat">
+     <enum>Qt::AutoText</enum>
+    </property>
+    <property name="alignment">
+     <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+    </property>
+   </widget>
+   <widget class="QCheckBox" name="checkBox_auto_integral">
+    <property name="geometry">
+     <rect>
+      <x>1060</x>
+      <y>20</y>
+      <width>91</width>
+      <height>20</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <family>Calibri</family>
+      <pointsize>10</pointsize>
+     </font>
+    </property>
+    <property name="text">
+     <string notr="true">Auto set</string>
+    </property>
+   </widget>
+   <widget class="QSpinBox" name="spinBox_integral_line">
+    <property name="geometry">
+     <rect>
+      <x>1100</x>
+      <y>50</y>
+      <width>61</width>
+      <height>22</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <family>Calibri</family>
+      <pointsize>10</pointsize>
+     </font>
+    </property>
+    <property name="maximum">
+     <number>0</number>
+    </property>
+   </widget>
+   <widget class="QLabel" name="label_integral_line">
+    <property name="geometry">
+     <rect>
+      <x>1040</x>
+      <y>50</y>
+      <width>51</width>
+      <height>21</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <family>Calibri</family>
+      <pointsize>10</pointsize>
+     </font>
+    </property>
+    <property name="text">
+     <string>Line:</string>
+    </property>
+    <property name="textFormat">
+     <enum>Qt::AutoText</enum>
+    </property>
+    <property name="alignment">
+     <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+    </property>
+   </widget>
+   <widget class="MplWidget" name="mplwidget_show_curve" native="true">
+    <property name="geometry">
+     <rect>
+      <x>850</x>
+      <y>720</y>
+      <width>181</width>
+      <height>101</height>
+     </rect>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">background-color: rgba(220, 220, 220, 200);</string>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="btn_save_points">
+    <property name="geometry">
+     <rect>
+      <x>1060</x>
+      <y>505</y>
+      <width>101</width>
+      <height>31</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <family>Calibri</family>
+      <pointsize>10</pointsize>
+     </font>
+    </property>
+    <property name="text">
+     <string>Save Points</string>
+    </property>
+    <property name="shortcut">
+     <string>Ctrl+S</string>
+    </property>
+    <property name="autoRepeatDelay">
+     <number>-1</number>
+    </property>
+    <property name="autoRepeatInterval">
+     <number>-1</number>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="btn_open_folder">
+    <property name="geometry">
+     <rect>
+      <x>720</x>
+      <y>10</y>
+      <width>101</width>
+      <height>31</height>
+     </rect>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">background-color: rgba(255, 255, 255, 0);</string>
+    </property>
+    <property name="text">
+     <string/>
+    </property>
+   </widget>
    <zorder>btn_browse</zorder>
    <zorder>textBrowser_browse</zorder>
    <zorder>groupBox_filedetail</zorder>
@@ -1523,6 +1687,14 @@
    <zorder>label_labeled_points</zorder>
    <zorder>textBrowser_labeled_points</zorder>
    <zorder>groupBox</zorder>
+   <zorder>spinBox_integral_ratio</zorder>
+   <zorder>label_integral_ratio</zorder>
+   <zorder>checkBox_auto_integral</zorder>
+   <zorder>spinBox_integral_line</zorder>
+   <zorder>label_integral_line</zorder>
+   <zorder>mplwidget_show_curve</zorder>
+   <zorder>btn_save_points</zorder>
+   <zorder>btn_open_folder</zorder>
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
   <widget class="QMenuBar" name="menubar">
@@ -1530,7 +1702,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>836</width>
+     <width>1179</width>
      <height>25</height>
     </rect>
    </property>
@@ -1538,7 +1710,6 @@
     <property name="title">
      <string>File</string>
     </property>
-    <addaction name="action_save_all_result"/>
     <addaction name="action_version"/>
    </widget>
    <widget class="QMenu" name="menuSetting">
@@ -1547,18 +1718,11 @@
     </property>
     <addaction name="action_reset_setting"/>
     <addaction name="action_open_setting_file"/>
+    <addaction name="action_open_saved_points"/>
    </widget>
    <addaction name="menuFile"/>
    <addaction name="menuSetting"/>
   </widget>
-  <action name="action_save_all_result">
-   <property name="text">
-    <string>Save all result</string>
-   </property>
-   <property name="shortcut">
-    <string>Ctrl+S</string>
-   </property>
-  </action>
   <action name="action_version">
    <property name="text">
     <string>Version</string>
@@ -1574,7 +1738,20 @@
     <string>Open Setting File</string>
    </property>
   </action>
+  <action name="action_open_saved_points">
+   <property name="text">
+    <string>Open Saved Points</string>
+   </property>
+  </action>
  </widget>
+ <customwidgets>
+  <customwidget>
+   <class>MplWidget</class>
+   <extends>QWidget</extends>
+   <header>mplwidget.h</header>
+   <container>1</container>
+  </customwidget>
+ </customwidgets>
  <resources/>
  <connections/>
  <buttongroups>
