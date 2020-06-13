@@ -4,7 +4,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
 import matplotlib
-from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
+from matplotlib import animation
 import json
 
 import sys
@@ -72,16 +72,22 @@ class My_MainWindow(QMainWindow, Ui_MainWindow):
         # 設定 json 內容
         self.default_path = self.json_para['path']
 
-        if self.json_para['method'] == 'sad':
+        if self.json_para['method'] == 'SAD':
             self.radioButton_SAD.setChecked(True)
-        elif self.json_para['method'] == 'correlation_coefficient':
+        elif self.json_para['method'] == 'PPMCC':
             self.radioButton_PPMCC.setChecked(True)
-        elif self.json_para['method'] == 'cross_correlation':
+        elif self.json_para['method'] == 'NCC':
             self.radioButton_CC.setChecked(True)
-        elif self.json_para['method'] == 'optical_flow':
+        elif self.json_para['method'] == 'OF':
             self.radioButton_Optical.setChecked(True)
 
         self.checkBox_Animation.setChecked(self.json_para['animation'])
+
+        self.btn_save_video_checkable.setChecked(self.json_para['auto_save_video'])
+        self.btn_save_csv_checkable.setChecked(self.json_para['auto_save_csv'])
+        self.btn_save_curve_checkable.setChecked(self.json_para['auto_save_curve'])
+        self.btn_save_ani_curve_checkable.setChecked(self.json_para['auto_save_ani_curve'])
+
 
         # 初始化防止特定錯誤
         self.filename = ''
@@ -125,6 +131,7 @@ class My_MainWindow(QMainWindow, Ui_MainWindow):
         self.btn_save_video.clicked.connect(self.clicked_btn_save_video)
         self.btn_save_csv.clicked.connect(self.clicked_btn_save_csv)
         self.btn_save_curve.clicked.connect(self.clicked_btn_save_curve)
+        self.btn_save_ani_curve.clicked.connect(self.clicked_btn_save_ani_curve)
 
         # mode 切換
         self.radioButton_line.toggled.connect(self.radio_btn_line_change)
@@ -151,7 +158,21 @@ class My_MainWindow(QMainWindow, Ui_MainWindow):
 
         # 按下 animation -> 更新 json 設定檔
         self.checkBox_Animation.clicked.connect(self.checkBox_Animation_change)
+
+        # 更改方法
+        self.radioButton_PPMCC.clicked.connect(self.method_changed)
+        self.radioButton_SAD.clicked.connect(self.method_changed)
+        self.radioButton_CC.clicked.connect(self.method_changed)
+        self.radioButton_Optical.clicked.connect(self.method_changed)
+
+        # auto save 相關 -> 更新 json 設定檔
         self.checkBox_auto_save.clicked.connect(self.checkBox_auto_save_change)
+        self.btn_save_video_checkable.clicked.connect(self.checkBox_auto_save_btn)
+        self.btn_save_csv_checkable.clicked.connect(self.checkBox_auto_save_btn)
+        self.btn_save_curve_checkable.clicked.connect(self.checkBox_auto_save_btn)
+        self.btn_save_ani_curve_checkable.clicked.connect(self.checkBox_auto_save_btn)
+
+
 
         #################### 額外控制功能的動作 ####################
 
@@ -391,15 +412,7 @@ class My_MainWindow(QMainWindow, Ui_MainWindow):
         self.start = self.spinBox_start.value()
         self.end = self.spinBox_end.value() + 1
 
-        # 判斷 COST 方法
-        if self.radioButton_SAD.isChecked():
-            self.json_para['method'] = 'sad'
-        elif self.radioButton_PPMCC.isChecked():
-            self.json_para['method'] = 'correlation_coefficient'
-        elif self.radioButton_CC.isChecked():
-            self.json_para['method'] = 'cross_correlation'
-        elif self.radioButton_Optical.isChecked():
-            self.json_para['method'] = 'optical_flow'
+
 
         # 呼叫 cv2 GUI class 的參數
         kwargs = {
@@ -526,11 +539,13 @@ class My_MainWindow(QMainWindow, Ui_MainWindow):
 
     def plot_strain_curve(self):
         # 開始繪圖
-        plt.figure()
+        self.fig, self.ax = plt.subplots()
         # figure = self.mplwidget_show_curve.canvas.figure.add_subplot(111)
 
         plt.xlabel('frame')
         # figure.set_xlabel('frame')
+        if self.json_para['curve_bound'] != 0:
+            plt.ylim(-self.json_para['curve_bound'], self.json_para['curve_bound'])
 
         for i in self.cv2_gui.result_distance.keys():
 
@@ -628,21 +643,18 @@ class My_MainWindow(QMainWindow, Ui_MainWindow):
     # 存檔的按鈕
     def clicked_btn_save_video(self):
         # 如果尚未選擇影像，或是尚未運行 cv2，不運行按鈕
-        if not self.filename or not self.cv2_gui:
-            return
+        if not self.filename or not self.cv2_gui: return
 
         fps, okPressed = QInputDialog.getInt(self, "Set output video FPS", "FPS:", self.json_para['video_fps'], 1,
                                              10000, 1)
-        if okPressed == False:
-            return
+        if okPressed == False: return
 
         path, filetype = QFileDialog.getSaveFileName(self, "文件保存",
                                                      self.default_path + '/' + self.default_filename + '.mp4',
                                                      "All Files (*);;MP4 Files (*.mp4)")
 
         # 如果沒有選擇存檔路徑，結束 function
-        if not path:
-            return
+        if not path: return
 
         self.json_para['video_fps'] = fps
         self.use_json('write')
@@ -747,27 +759,83 @@ class My_MainWindow(QMainWindow, Ui_MainWindow):
         if reply == 0:
             os.startfile(os.path.split(path)[0])
 
+
+    def clicked_btn_save_ani_curve(self, not_auto=''):
+        # 如果不是從自動存檔呼叫的，需要選擇檔案路徑
+        if not_auto != 'auto':
+            # 如果尚未選擇影像，或是尚未運行 cv2，不運行按鈕
+            if not self.filename or not self.cv2_gui: return
+
+            fps, okPressed = QInputDialog.getInt(self, "Set output video FPS", "FPS:", self.json_para['video_fps'], 1,
+                                                 10000, 1)
+
+            if okPressed == False: return
+
+            path, filetype = QFileDialog.getSaveFileName(self, "文件保存",
+                                                         self.default_path + '/' + self.default_filename + '_'+ self.json_para['method'] + '_ani_curve.mp4',
+                                                         "All Files (*);;MP4 Files (*.mp4)")
+
+            if not path: return # 如果沒有選擇存檔路徑，結束 function
+
+            self.json_para['video_fps'] = fps
+
+        # 如果是自動存檔呼叫的，指定路徑
+        else:
+            path = self.default_path + '/' + self.default_filename + '_' + self.json_para['method'] + '_ani_curve.mp4'
+
+
+
+        # plt.xlabel('frame')
+        if self.json_para['curve_bound'] != 0:
+            plt.ylim(-self.json_para['curve_bound'], self.json_para['curve_bound'])
+            line, = self.ax.plot([0, 0], [-self.json_para['curve_bound'], self.json_para['curve_bound']], color='k', alpha=0.2)
+        else:
+            line, = self.ax.plot([0, 0], [0.4, -0.4],color='k', alpha=0.2)
+
+        # 設定動態更新
+        def animate(i):
+            line.set_xdata([i, i])
+            return line,
+
+        # 設定初始狀態
+        def init():
+            line.set_xdata([0, 0])
+            return line,
+
+        # 建立 animation 物件，frames = 影像數量， interval = 更新時間（ms）
+        ani = animation.FuncAnimation(fig=self.fig, func=animate, frames=self.num_of_img, init_func=init, interval=1000, blit=False)
+
+        ani.save(f"temp.gif", writer='imagemagick', fps=20)
+        gif = cv2.VideoCapture(f"temp.gif")
+        ret, frame = gif.read()
+        h, w, ch = frame.shape
+        fourcc = cv2.VideoWriter_fourcc('m', 'p', '4', 'v')
+        videowriter = cv2.VideoWriter(path, fourcc, self.json_para['video_fps'], (w, h))
+        while ret:
+            videowriter.write(frame)
+            ret, frame = gif.read()
+
+        videowriter.release()
+
+
     # 儲存所有結果
     def auto_save_files(self):
         if not self.filename or not self.cv2_gui:
             return
 
-        path = self.default_path + '/' + self.default_filename + '.all'
-
-        # 如果沒有選擇存檔路徑，結束 function
-        if not path:
-            return
-
+        path = self.default_path + '/' + self.default_filename + '_' + self.json_para['method'] + '.all'
         if path.split('.')[-1] == 'all':
             path = path.split('.')[0]
 
-        # 儲存 mp4
-        fourcc = cv2.VideoWriter_fourcc('m', 'p', '4', 'v')
-        videowriter = cv2.VideoWriter(path + '.mp4', fourcc, self.json_para['video_fps'], (self.w, self.h))
+        if self.json_para['auto_save_video']:
+            # 儲存 mp4
+            fourcc = cv2.VideoWriter_fourcc('m', 'p', '4', 'v')
+            videowriter = cv2.VideoWriter(path + '.mp4', fourcc, self.json_para['video_fps'], (self.w, self.h))
 
-        for img in self.cv2_gui.img_label:
-            videowriter.write(img)
-        videowriter.release()
+            for img in self.cv2_gui.img_label:
+                videowriter.write(img)
+            videowriter.release()
+
 
         # 儲存 csv
         select_df = pd.DataFrame(self.cv2_gui.result_point)
@@ -779,10 +847,17 @@ class My_MainWindow(QMainWindow, Ui_MainWindow):
                 select_df.insert(i * 4 + 2, 'Distance {} -> {}'.format(i * 2, i * 2 + 1), d)
                 select_df.insert(i * 4 + 3, 'Strain {} -> {}'.format(i * 2, i * 2 + 1), s)
 
+            if self.json_para['auto_save_curve']:
             # 儲存 curve
-            cv2.imencode('.png', self.result_curve_temp)[1].tofile(path + '.png')
+                cv2.imencode('.png', self.result_curve_temp)[1].tofile(path + '.png')
 
-        select_df.to_csv(path + '.csv', index=True, sep=',')
+        if self.json_para['auto_save_csv']:
+            select_df.to_csv(path + '.csv', index=True, sep=',')
+
+
+        if self.json_para['auto_save_ani_curve']:
+            self.clicked_btn_save_ani_curve('auto')
+
 
     def action_soft_information(self):
         msg = QMessageBox()
@@ -878,7 +953,33 @@ class My_MainWindow(QMainWindow, Ui_MainWindow):
         self.use_json('write')
 
     def checkBox_auto_save_change(self):
+        if self.checkBox_auto_save.isChecked():
+            self.stackedWidget_auto_save.setCurrentIndex(1)
+        else:
+            self.stackedWidget_auto_save.setCurrentIndex(0)
+
         self.json_para['auto_save'] = self.checkBox_auto_save.isChecked()
+        self.use_json('write')
+
+
+    def method_changed(self):
+        # 判斷 COST 方法
+        if self.radioButton_SAD.isChecked():
+            self.json_para['method'] = 'SAD'
+        elif self.radioButton_PPMCC.isChecked():
+            self.json_para['method'] = 'PPMCC'
+        elif self.radioButton_CC.isChecked():
+            self.json_para['method'] = 'NCC'
+        elif self.radioButton_Optical.isChecked():
+            self.json_para['method'] = 'OF'
+        self.use_json('write')
+
+    def checkBox_auto_save_btn(self):
+        self.json_para['auto_save_video'] = True if self.btn_save_video_checkable.isChecked() else False
+        self.json_para['auto_save_csv'] = True if self.btn_save_csv_checkable.isChecked() else False
+        self.json_para['auto_save_curve'] = True if self.btn_save_curve_checkable.isChecked() else False
+        self.json_para['auto_save_ani_curve'] = True if self.btn_save_ani_curve_checkable.isChecked() else False
+
         self.use_json('write')
 
     def checkBox_auto_integral_change(self):

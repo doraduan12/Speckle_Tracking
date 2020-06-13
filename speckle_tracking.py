@@ -5,14 +5,14 @@ import time
 
 class SpeckleTracking():
 
-    def __init__(self, method='correlation_coefficient'):
-        if method == 'correlation_coefficient':
+    def __init__(self, method='PPMCC'):
+        if method == 'PPMCC':
             self.method = self.full_Correlation_oefficient
-        elif method == 'sad':
+        elif method == 'SAD':
             self.method = self.full_SAD
-        elif method == 'cross_correlation':
+        elif method == 'NCC':
             self.method = self.full_Cross_Correlation
-        elif method == 'optical_flow':
+        elif method == 'OF':
             self.method = self.optical_flow
             self.lk_params = dict(winSize=(17, 17),
                              maxLevel=2,
