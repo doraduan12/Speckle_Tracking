@@ -8,13 +8,15 @@ import os
 
 from speckle_tracking import SpeckleTracking
 from tools import Cv2Tools
+
 # from mouse_event import
 
 cv2_tool = Cv2Tools()
 
+
 class Cv2Line():
 
-    def __init__(self, main_window, imgs:np, delta_x: float, delta_y: float, window_name: str,
+    def __init__(self, main_window, imgs: np, delta_x: float, delta_y: float, window_name: str,
                  temp_size: int, default_search: int, method: str, draw_delay: int, json_para: dict):
 
         self.main_window = main_window
@@ -56,8 +58,6 @@ class Cv2Line():
         self.font_bold = self.json_para['font']['bold']
         self.line_bold = self.json_para['line']['bold']
 
-
-
         # 點相關參數
         self.target_point = []  # -> tuple
         self.track_done = []
@@ -75,15 +75,10 @@ class Cv2Line():
 
         self.speckle_tracking = SpeckleTracking(method=method)
 
-
-
     # 重置所有動作
     def reset(self):
         self.img_label = np.copy(self.IMGS)
         cv2.imshow(self.window_name, self.img_label[self.current_page])
-
-        # 積分的 num of line 重製
-        self.main_window.spinBox_integral_line.setRange(0, 0)
 
         self.num_of_line = 0
         self.color_index = 0
@@ -98,9 +93,8 @@ class Cv2Line():
 
         print('Reseting complete.')
 
-
     # track bar 更動
-    def track_change(self, x:int):
+    def track_change(self, x: int):
         '''
         Track bar 變動時的呼叫函數
         :param x: 變動後的值
@@ -108,9 +102,6 @@ class Cv2Line():
         '''
         self.current_page = x
         cv2.imshow(self.window_name, self.img_label[self.current_page])
-
-
-
 
     # 滑鼠事件
     def click_event(self, event, x, y, flags, param):
@@ -124,7 +115,6 @@ class Cv2Line():
 
             # 更新 Trackbar，__track_change會更新圖片
             cv2.setTrackbarPos('No', self.window_name, self.current_page)
-
 
         # 劃出線段（左鍵點擊時）
         if event == cv2.EVENT_LBUTTONDOWN:
@@ -144,7 +134,8 @@ class Cv2Line():
             text_point, d = cv2_tool.count_distance(self.point1, (x, y), self.delta)
             font = cv2.FONT_HERSHEY_SIMPLEX
             if self.font_show:
-                cv2.putText(temp_img, '{:4.3f}{}'.format(d, '(p)' if self.delta_x == 0 else ''), text_point, font, self.font_size, (255, 255, 255), self.font_bold)
+                cv2.putText(temp_img, '{:4.3f}{}'.format(d, '(p)' if self.delta_x == 0 else ''), text_point, font,
+                            self.font_size, (255, 255, 255), self.font_bold)
 
             # 刷新畫面
             cv2.imshow(self.window_name, temp_img)
@@ -158,7 +149,8 @@ class Cv2Line():
                 self.point2 = (x, y)
 
                 # 作圖
-                cv2.line(self.img_label[self.current_page], self.point1, self.point2, self.current_color, thickness=self.line_bold)
+                cv2.line(self.img_label[self.current_page], self.point1, self.point2, self.current_color,
+                         thickness=self.line_bold)
                 cv2.circle(self.img_label[self.current_page], self.point1, 0, self.current_color, thickness=2)
                 cv2.circle(self.img_label[self.current_page], self.point2, 0, self.current_color, thickness=2)
 
@@ -166,7 +158,8 @@ class Cv2Line():
                 text_point, d = cv2_tool.count_distance(self.point1, self.point2, self.delta)
                 font = cv2.FONT_HERSHEY_SIMPLEX
                 if self.font_show:
-                    cv2.putText(self.img_label[self.current_page], '{:4.3f}{}'.format(d, '(p)' if self.delta_x == 0 else ''),
+                    cv2.putText(self.img_label[self.current_page],
+                                '{:4.3f}{}'.format(d, '(p)' if self.delta_x == 0 else ''),
                                 text_point, font, self.font_size, (255, 255, 255), self.font_bold)
 
                 # 新增點參數
@@ -175,12 +168,15 @@ class Cv2Line():
 
                 # 計算預設的 search window
                 x, y = self.point1
-                s11, s12, _, _ = cv2_tool.get_search_window((x, y), (x + self.default_search//2, y+self.default_search//2), self.temp_size)
+                s11, s12, _, _ = cv2_tool.get_search_window((x, y), (
+                x + self.default_search // 2, y + self.default_search // 2), self.temp_size)
                 x, y = self.point2
-                s21, s22, _, _ = cv2_tool.get_search_window((x, y), (x + self.default_search//2, y+self.default_search//2), self.temp_size)
+                s21, s22, _, _ = cv2_tool.get_search_window((x, y), (
+                x + self.default_search // 2, y + self.default_search // 2), self.temp_size)
 
                 self.search_point.extend([[s11, s12], [s21, s22]])
-                self.search_shift.extend([(self.default_search // 2, self.default_search // 2), (self.default_search // 2, self.default_search // 2)])
+                self.search_shift.extend([(self.default_search // 2, self.default_search // 2),
+                                          (self.default_search // 2, self.default_search // 2)])
 
                 print(f"{self.point1}, {self.point2}")
 
@@ -197,10 +193,6 @@ class Cv2Line():
                 points_show = self.main_window.textBrowser_labeled_points.toPlainText()
                 points_show += f"{self.point1}, {self.point2},\n"
                 self.main_window.textBrowser_labeled_points.setText(points_show)
-
-
-
-
 
         # 設定 Search Window（右鍵點擊時）
         if event == cv2.EVENT_RBUTTONDOWN:
@@ -223,7 +215,6 @@ class Cv2Line():
             # 計算 Search Winodw, Calculate Range
             s1, s2, c1, c2 = cv2_tool.get_search_window(self.t_point, (x, y), self.temp_size)
 
-
             cv2.rectangle(temp_img, s1, s2, (255, 0, 0), thickness=1)
             cv2.rectangle(temp_img, c1, c2, (255, 255, 0), thickness=1)
 
@@ -243,16 +234,14 @@ class Cv2Line():
 
                 # 紀錄範圍
                 self.search_point[self.t_point_index] = [s1, s2]
-                self.search_shift[self.t_point_index] = (abs(x-tx), abs(y-ty))
+                self.search_shift[self.t_point_index] = (abs(x - tx), abs(y - ty))
 
                 # 畫圖
                 cv2.rectangle(self.img_label[self.current_page], s1, s2, (0, 0, 255), thickness=1)
                 cv2.rectangle(self.img_label[self.current_page], c1, c2, (255, 255, 0), thickness=1)
 
-
                 # 更新圖片
                 cv2.imshow(self.window_name, self.img_label[self.current_page])
-
 
     # 測試時方便建立線段
     def addPoint(self, point1, point2):
@@ -273,12 +262,17 @@ class Cv2Line():
         self.track_done.extend([False, False])
 
         x, y = point1
-        s11, s12, _, _ = cv2_tool.get_search_window((x, y), (x + self.default_search // 2, y + self.default_search // 2), self.temp_size)
+        s11, s12, _, _ = cv2_tool.get_search_window((x, y),
+                                                    (x + self.default_search // 2, y + self.default_search // 2),
+                                                    self.temp_size)
         x, y = point2
-        s21, s22, _, _ = cv2_tool.get_search_window((x, y), (x + self.default_search // 2, y + self.default_search // 2), self.temp_size)
+        s21, s22, _, _ = cv2_tool.get_search_window((x, y),
+                                                    (x + self.default_search // 2, y + self.default_search // 2),
+                                                    self.temp_size)
 
         self.search_point.extend([[s11, s12], [s21, s22]])
-        self.search_shift.extend([(self.default_search // 2, self.default_search // 2), (self.default_search // 2, self.default_search // 2)])
+        self.search_shift.extend([(self.default_search // 2, self.default_search // 2),
+                                  (self.default_search // 2, self.default_search // 2)])
 
         cv2.imshow(self.window_name, self.img_label[self.current_page])
 
@@ -287,7 +281,6 @@ class Cv2Line():
 
         self.color_index += 1
         self.current_color = self.colors[self.color_index]
-
 
     # 畫線的 Speckle Tracking
     def tracking(self, show=False):
@@ -300,13 +293,13 @@ class Cv2Line():
             # 如果該點完成，跳過該點
             if done: continue
 
-            if j%2 == 1: self.num_of_line += 1 # 更新 計算機分線條的上限
+            if j % 2 == 1: self.num_of_line += 1  # 更新 計算機分線條的上限
 
             finish_already = False
             self.track_done[j] = True
             self.result_point[j] = [tp]
 
-            color = self.colors[(j//2) % self.num_of_color]
+            color = self.colors[(j // 2) % self.num_of_color]
 
             print('Now is tracking point{}/{}.'.format(j + 1, len(self.target_point)))
 
@@ -316,7 +309,8 @@ class Cv2Line():
             for i in range(1, self.num_of_img):
                 progress_fraction += 1
                 # target, img1, img2, search_shift, temp_size
-                result = self.speckle_tracking.method(result, self.IMGS_GRAY[i-1], self.IMGS_GRAY[i], s_shift, self.temp_size)
+                result = self.speckle_tracking.method(result, self.IMGS_GRAY[i - 1], self.IMGS_GRAY[i], s_shift,
+                                                      self.temp_size)
 
                 self.result_point[j].append(result)
 
@@ -325,7 +319,6 @@ class Cv2Line():
                 # 若運算的點為直線的第二端，開始畫線
                 if j % 2 == 1:
 
-
                     # 抓出前次結果的點
                     p_last = self.result_point[j - 1][i]
 
@@ -333,17 +326,15 @@ class Cv2Line():
                     cv2.line(self.img_label[i], p_last, result, color, thickness=self.line_bold)
                     text_point, d = cv2_tool.count_distance(p_last, result, self.delta)
                     if self.font_show:
-                        cv2.putText(self.img_label[i], '{:4.3f}{}'.format(d, '(p)' if self.delta_x == 0 else ''), text_point,
+                        cv2.putText(self.img_label[i], '{:4.3f}{}'.format(d, '(p)' if self.delta_x == 0 else ''),
+                                    text_point,
                                     cv2.FONT_HERSHEY_SIMPLEX, self.font_size, (255, 255, 255), self.font_bold)
-                    self.result_distance[j//2].append(d)
+                    self.result_distance[j // 2].append(d)
 
                 if show:
                     self.show_progress_bar(self.img_label[i], progress_fraction, progress_denominator)
 
             self.show_progress_bar(np.copy(self.img_label[0]), progress_fraction, progress_denominator)
-
-        # 更新 計算機分線條的上限
-        self.main_window.spinBox_integral_line.setRange(1, self.num_of_line)
 
         cv2.imshow(self.window_name, self.img_label[0])
         cv2.waitKey(1)
@@ -353,14 +344,15 @@ class Cv2Line():
             self.result_strain[i] = list((d_list - d_list[0]) / d_list[0])
 
     def show_progress_bar(self, img, fraction, denominator):
-        temp_img = cv2.line(np.copy(img), (0, self.h - 1), (((self.w - 1) * fraction)//denominator, self.h - 1), (216, 202, 28), 5)
+        temp_img = cv2.line(np.copy(img), (0, self.h - 1), (((self.w - 1) * fraction) // denominator, self.h - 1),
+                            (216, 202, 28), 5)
         cv2.imshow(self.window_name, temp_img)
         cv2.waitKey(1)
 
 
 class Cv2Point():
 
-    def __init__(self, main_window, imgs:np, delta_x: float, delta_y: float, window_name: str,
+    def __init__(self, main_window, imgs: np, delta_x: float, delta_y: float, window_name: str,
                  temp_size: int, default_search: int, method: str, draw_delay: int, json_para: dict):
 
         self.IMGS = imgs
@@ -384,7 +376,6 @@ class Cv2Point():
         self.img_label = np.copy(self.IMGS)
         self.num_of_img, self.h, self.w, _ = self.IMGS.shape
 
-
         # 點相關參數
         self.target_point = []  # -> tuple
         self.track_done = []
@@ -397,7 +388,6 @@ class Cv2Point():
         cv2.waitKey(1)
 
         self.speckle_tracking = SpeckleTracking(method=method)
-
 
     # 重置所有動作
     def reset(self):
@@ -412,9 +402,8 @@ class Cv2Point():
 
         print('Reseting complete.')
 
-
     # track bar 更動
-    def track_change(self, x:int):
+    def track_change(self, x: int):
         '''
         Track bar 變動時的呼叫函數
         :param x: 變動後的值
@@ -422,7 +411,6 @@ class Cv2Point():
         '''
         self.current_page = x
         cv2.imshow(self.window_name, self.img_label[self.current_page])
-
 
     def draw_point(self, x, y):
         if (x, y) not in self.target_point:
@@ -433,7 +421,6 @@ class Cv2Point():
             # 刷新畫面
             cv2.imshow(self.window_name, self.img_label[self.current_page])
             cv2.waitKey(1)
-
 
     # 滑鼠事件
     def click_event(self, event, x, y, flags, param):
@@ -447,8 +434,6 @@ class Cv2Point():
 
             # 更新 Trackbar，__track_change會更新圖片
             cv2.setTrackbarPos('No', self.window_name, self.current_page)
-
-
 
         # 劃出線段（左鍵點擊時）
         if event == cv2.EVENT_LBUTTONDOWN:
@@ -466,7 +451,6 @@ class Cv2Point():
             self.draw_point(x, y)
             self.draw_count = 0
 
-
         # 設定 Search Window（右鍵點擊時）
         if event == cv2.EVENT_RBUTTONDOWN:
             pass
@@ -479,8 +463,6 @@ class Cv2Point():
         elif event == cv2.EVENT_RBUTTONUP:
             pass
 
-
-
     # 測試時方便建立線段
     def addPoint(self, point):
         self.target_point.append(point)
@@ -491,11 +473,10 @@ class Cv2Point():
         cv2.imshow(self.window_name, self.img_label[self.current_page])
         cv2.waitKey(1)
 
-
     # 畫線的 Speckle Tracking
     def tracking(self, show=False):
         finish_already = True
-        search_shift = (self.default_search//2, self.default_search//2)
+        search_shift = (self.default_search // 2, self.default_search // 2)
 
         progress_denominator = (len(self.track_done) - np.sum(np.asarray(self.track_done))) * (len(self.IMGS) - 1)
         progress_fraction = 0
@@ -516,7 +497,8 @@ class Cv2Point():
             for i in range(1, self.num_of_img):
                 progress_fraction += 1
                 # target, img1, img2, search_shift, temp_size
-                result = self.speckle_tracking.method(result, self.IMGS_GRAY[i-1], self.IMGS_GRAY[i], search_shift, self.temp_size)
+                result = self.speckle_tracking.method(result, self.IMGS_GRAY[i - 1], self.IMGS_GRAY[i], search_shift,
+                                                      self.temp_size)
                 self.result_point[j].append(result)
                 cv2.circle(self.img_label[i], result, 1, (0, 0, 255), thickness=-1)
 
@@ -529,9 +511,9 @@ class Cv2Point():
         cv2.imshow(self.window_name, self.img_label[0])
         cv2.waitKey(1)
 
-
     def show_progress_bar(self, img, fraction, denominator):
-        temp_img = cv2.line(np.copy(img), (0, self.h - 1), (((self.w - 1) * fraction)//denominator, self.h - 1), (216, 202, 28), 5)
+        temp_img = cv2.line(np.copy(img), (0, self.h - 1), (((self.w - 1) * fraction) // denominator, self.h - 1),
+                            (216, 202, 28), 5)
         cv2.imshow(self.window_name, temp_img)
         cv2.waitKey(1)
 
@@ -584,7 +566,8 @@ class SetDelta():
 
 
 
+
+
+
 if __name__ == '__main__':
     pass
-
-

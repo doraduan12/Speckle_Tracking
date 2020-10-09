@@ -1,5 +1,7 @@
 {
     "path": "D:\\",
+    "save_path": "D:\\",
+    "auto_save_path": "D:\\",
     "method": "PPMCC",
     "template_size": 32,
     "search_size": 10,
@@ -14,6 +16,7 @@
     "auto_save_csv": false,
     "auto_save_curve": false,
     "auto_save_ani_curve": false,
+    "user":  "",
     "font": {
         "show": true,
         "size": 0.5,
