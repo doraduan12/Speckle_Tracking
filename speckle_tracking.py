@@ -7,7 +7,7 @@ class SpeckleTracking():
 
     def __init__(self, method='PPMCC'):
         if method == 'PPMCC':
-            self.method = self.full_Correlation_oefficient
+            self.method = self.full_Correlation_coefficient
         elif method == 'SAD':
             self.method = self.full_SAD
         elif method == 'NCC':
@@ -49,8 +49,7 @@ class SpeckleTracking():
         return (result_x, result_y)
 
 
-
-    def full_Correlation_oefficient(self, target: tuple, img1: np, img2: np, search_shift: tuple, temp_size: int) -> tuple:
+    def full_Correlation_coefficient(self, target: tuple, img1: np, img2: np, search_shift: tuple, temp_size: int) -> tuple:
         # cv2.matchTemplate 是從左上角點來匹配，並且不會新增 padding，因此要對search window 的角落多開半個 temp_size
         temp_bias = temp_size//2
         search_x, search_y = search_shift
@@ -65,6 +64,7 @@ class SpeckleTracking():
         result = cv2.matchTemplate(template, target_img, cv2.TM_CCOEFF_NORMED)
         # cv2.normalize(result, result, 0, 1, cv2.NORM_MINMAX, -1)
         min_val, max_val, min_loc, max_loc = cv2.minMaxLoc(result)
+        print(max_val)
 
         result_x, result_y = max_loc
         

@@ -114,9 +114,7 @@ def load_file(mw, files=None):   # mw = main window
         browse_path = os.path.split(files[0])[0]
         mw.filename = os.path.split(browse_path)[-1]
 
-        # 輸出影向預設的路徑與檔案名稱
-        mw.default_path = os.path.split(browse_path)[0]
-        mw.default_filename = mw.filename
+
 
         if mw.extension == '.mp4' or mw.extension == '.avi':
             mw.filename = os.path.splitext(os.path.split(files[0])[-1])[0]
@@ -141,6 +139,10 @@ def load_file(mw, files=None):   # mw = main window
                 np.asarray([cv2.imdecode(np.fromfile(file, dtype=np.uint8), -1) for file in files]))
             if np.ndim(mw.IMGS) == 3:
                 mw.IMGS = cv2.merge([mw.IMGS, mw.IMGS, mw.IMGS])
+
+        # 輸出影向預設的路徑與檔案名稱
+        mw.default_path = os.path.split(browse_path)[0]
+        mw.default_filename = mw.filename
 
         mw.img_preview = mw.IMGS[0]
         mw.num_of_img, mw.h, mw.w = mw.IMGS.shape[:3]
@@ -357,10 +359,10 @@ def run_cv2(mw, multi_mode=False):
                 pass
 
         # 「t」 增加預設點數（測試時用）
-        # if action == 'test':
-        #     cv2.imshow('LHE', cv2_tool.local_histogram_equalization(mw.IMGS[0], 35))
-        #     cv2.setMouseCallback('LHE', mw.cv2_gui.click_event)  # 設定滑鼠回饋事件
-        #     cv2.waitKey(1)
+        if action == 'test':
+            cv2.imshow('LHE', cv2_tool.local_histogram_equalization(mw.IMGS[0], 35))
+            cv2.setMouseCallback('LHE', mw.cv2_gui.click_event)  # 設定滑鼠回饋事件
+            cv2.waitKey(1)
 
         # print(f"mw.cv2_gui.result_distance :\n{mw.cv2_gui.result_distance}")
 

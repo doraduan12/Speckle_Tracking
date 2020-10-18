@@ -12,7 +12,7 @@ from PyQt5.QtWidgets import QFileDialog, QMainWindow
 
 class GuiTools():
     ACTION = {27: 'esc', 67: 'clear', 99: 'clear', 82: 'reset', 114: 'reset',
-              26: 'last atcion', 66: 'back', 98: 'back', 84: 't', 116: 't',
+              26: 'last atcion', 66: 'back', 98: 'back', 84: 'test', 116: 'test',
               76: 'line', 108: 'line', 83: 'speckle', 115: 'speckle',
               32: 'space', 77: 'median filter', 109: 'median filter'}
 
