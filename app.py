@@ -6,6 +6,8 @@ import pandas as pd
 import matplotlib
 from matplotlib import animation
 import json
+from io import BytesIO
+import PIL
 
 import sys
 import os
@@ -21,6 +23,7 @@ from cv2_gui import *
 from tools import GuiTools
 import main_general
 import main_tk
+import main_ishan
 
 gui_tool = GuiTools()
 
@@ -35,6 +38,12 @@ cgitb.enable(format='text')
 2. 星期五高教計畫將操作流程、簡介報告出來
 
 3. 加上選擇頁數，在下星期一報告
+
+
+未來改進方向
+https://blog.csdn.net/jacke121/article/details/54718563
+CV2 選框套件
+
 '''
 
 import img.iconQrc
@@ -71,6 +80,11 @@ class My_MainWindow(QMainWindow, Ui_MainWindow):
         # fig 初始化
         self.fig = ""
 
+
+        # 把專屬工具欄關掉，在特定使用者時才開啟
+        self.menuYuwen.menuAction().setVisible(False)
+
+
         self.setup()
 
     def setup(self):
@@ -89,8 +103,11 @@ class My_MainWindow(QMainWindow, Ui_MainWindow):
 
         if self.json_para['user'] == 'yuwen':
             self.action_user_yuwen.setChecked(True)
+            self.menuYuwen.menuAction().setVisible(True)    # 開啟專屬工具欄
         elif self.json_para['user'] == 'tk':
             self.action_user_tk.setChecked(True)
+        elif self.json_para['user'] == 'ishan':
+            self.action_user_ishan.setChecked(True)
 
         self.checkBox_Animation.setChecked(self.json_para['animation'])
 
@@ -123,7 +140,7 @@ class My_MainWindow(QMainWindow, Ui_MainWindow):
         self.btn_run.clicked.connect(self.clicked_btn_run)
 
         # 按下 COLOR 轉換色彩
-        self.btn_color.clicked.connect(self.clicked_btn_color)
+        # self.btn_color.clicked.connect(self.clicked_btn_color)
 
         # 按下 delta 設定 delta
         self.btn_set_delta.clicked.connect(self.clicked_btn_set_delta)
@@ -178,9 +195,11 @@ class My_MainWindow(QMainWindow, Ui_MainWindow):
         # 連結改變模式
         self.action_user_tk.triggered.connect(self.action_user_tk_change)
         self.action_user_yuwen.triggered.connect(self.action_user_yuwen_change)
+        self.action_user_ishan.triggered.connect(self.action_user_ishan_change)
 
-        # 按下 tk load file
-        # self.action_tk_load_file.triggered.connect(self.action_tk_load_file_triggered)
+        # 按下
+        self.action_resize_input.triggered.connect(self.action_resize_input_triggered)
+
 
         ''' Spin box '''
 
@@ -225,7 +244,7 @@ class My_MainWindow(QMainWindow, Ui_MainWindow):
     # 按下 選路徑(btn_path) 按鈕的動作
     @pyqtSlot()
     def clicked_btn_path(self, files=None):
-        
+
         if self.action_user_tk.isChecked():
             main_tk.load_file(self)
         else:
@@ -237,15 +256,16 @@ class My_MainWindow(QMainWindow, Ui_MainWindow):
 
         if self.action_user_tk.isChecked():
             main_tk.run_cv2(self)
+        elif self.action_user_ishan.isChecked():
+            main_ishan.run_cv2(self)
         else:
             main_general.run_cv2(self, multi_mode)
 
 
-
     def plot_strain_curve(self, axv=0):
         # 開始繪圖
-        # self.fig, self.ax = plt.subplots()
-        plt.figure()
+        self.fig, self.ax = plt.subplots()
+        # plt.figure()
         plt.xlabel('frame')
         if self.json_para['curve_bound'] != 0:
             plt.ylim(-self.json_para['curve_bound'], self.json_para['curve_bound'])
@@ -276,19 +296,32 @@ class My_MainWindow(QMainWindow, Ui_MainWindow):
 
         if axv != 0: plt.axvline(axv, color='k', alpha=0.2)
 
-        plt.savefig('D:/output.png', format='png', dpi=600, pad_inches=0)
+        # 申請緩衝地址
+        buffer_ = BytesIO()
 
-        self.result_curve_temp = cv2.imdecode(np.fromfile('D:/output.png', dtype=np.uint8), -1)  # 解決中文路徑問題
-        os.remove('D:/output.png')
+        # 儲存在記憶體中，而不是在本地磁碟，注意這個預設認為你要儲存的就是plt中的內容
+        plt.savefig(buffer_, format='png')
+        plt.close()
+        buffer_.seek(0)
 
+        # 用PIL或CV2從記憶體中讀取
+        dataPIL = PIL.Image.open(buffer_)
+
+        # 轉換為nparrary，PIL轉換就非常快了，data即為所需
+        self.result_curve_temp = cv2.cvtColor(np.asarray(dataPIL), cv2.COLOR_BGR2RGB)
+
+        # 顯示
         self.label_show_curve.setPixmap(QtGui.QPixmap(gui_tool.convert2qtimg(self.result_curve_temp)))
         self.label_show_curve.setScaledContents(True)
+
+        # 釋放快取
+        buffer_.close()
 
     def clicked_btn_set_delta(self):
         if not self.filename:
             return
 
-        input_dy, okPressed = QInputDialog.getInt(self, "Set Delta x/y", "Line length (mm):", 5, 1, 100, 1)
+        input_dy, okPressed = QInputDialog.getInt(self, "Set Delta x/y", "Line length (unit):", 5, 1, 100, 1)
         if okPressed:
             set_delta = SetDelta(self.IMGS[0])
 
@@ -355,20 +388,20 @@ class My_MainWindow(QMainWindow, Ui_MainWindow):
 
         self.cv2_gui.addPoint((x1, y1), (x2, y2))
 
-    # TODO 待修正
-    @pyqtSlot()
-    def clicked_btn_color(self):
-        if not self.filename:
-            return
-
-        # 將圖片從 YBR 轉成 BGR 通道
-        self.IMGS = np.asarray([cv2.cvtColor(
-            pydicom.pixel_data_handlers.util.convert_color_space(img, 'YBR_FULL', 'RGB'), cv2.COLOR_RGB2BGR) for img in
-            self.IMGS])
-        self.img_preview = self.IMGS[0]
-
-        # 建立預覽圖片、自適化調整
-        self.show_preview_img(np.copy(self.img_preview), self.json_para['template_size'], self.json_para['search_size'])
+    # # TODO 待修正
+    # @pyqtSlot()
+    # def clicked_btn_color(self):
+    #     if not self.filename:
+    #         return
+    #
+    #     # 將圖片從 YBR 轉成 BGR 通道
+    #     self.IMGS = np.asarray([cv2.cvtColor(
+    #         pydicom.pixel_data_handlers.util.convert_color_space(img, 'YBR_FULL', 'RGB'), cv2.COLOR_RGB2BGR) for img in
+    #         self.IMGS])
+    #     self.img_preview = self.IMGS[0]
+    #
+    #     # 建立預覽圖片、自適化調整
+    #     self.show_preview_img(np.copy(self.img_preview), self.json_para['template_size'], self.json_para['search_size'])
 
     # 存檔的按鈕
     def clicked_btn_save_video(self):
@@ -436,12 +469,22 @@ class My_MainWindow(QMainWindow, Ui_MainWindow):
 
         # 將結果點轉成 dataframe、更改 colums 文字
         select_df = pd.DataFrame(self.cv2_gui.result_point)
-        select_df.columns = ['Point {}'.format(i) for i in select_df.columns]
+        select_df.columns = [f'Point {i}' for i in select_df.columns]
 
         if self.mode == 'line':
+            for i, (dx, dy, d, s) in enumerate(zip(self.cv2_gui.result_dx.values(), self.cv2_gui.result_dy.values(), self.cv2_gui.result_distance.values(), self.cv2_gui.result_strain.values())):
+                select_df.insert(i * 6 + 2, 'dx {} -> {}'.format(i * 2, i * 2 + 1), dx)
+                select_df.insert(i * 6 + 3, 'dy {} -> {}'.format(i * 2, i * 2 + 1), dy)
+                select_df.insert(i * 6 + 4, 'Distance {} -> {}'.format(i * 2, i * 2 + 1), d)
+                select_df.insert(i * 6 + 5, 'Strain {} -> {}'.format(i * 2, i * 2 + 1), s)
+
+        elif self.mode == 'ishan':
+            line_num = len(self.cv2_gui.result_distance)
             for i, (d, s) in enumerate(zip(self.cv2_gui.result_distance.values(), self.cv2_gui.result_strain.values())):
-                select_df.insert(i * 4 + 2, 'Distance {} -> {}'.format(i * 2, i * 2 + 1), d)
-                select_df.insert(i * 4 + 3, 'Strain {} -> {}'.format(i * 2, i * 2 + 1), s)
+                select_df.insert(line_num + 2 * i, f"Distance p{i} -> p{i+1 if i+1 != line_num else 0}", d)
+                select_df.insert(line_num + 2 * i + 1, f"Strain p{i} -> p{i+1 if i+1 != line_num else 0}", s)
+
+
 
         select_df.to_csv(path, index=True, sep=',')
 
@@ -496,9 +539,9 @@ class My_MainWindow(QMainWindow, Ui_MainWindow):
         if reply == 0:
             os.startfile(os.path.split(path)[0])
 
-    def clicked_btn_save_ani_curve(self, not_auto=''):
+    def clicked_btn_save_ani_curve(self, is_auto=''):
         # 如果不是從自動存檔呼叫的，需要選擇檔案路徑
-        if not_auto != 'auto':
+        if is_auto != 'auto':
             # 如果尚未選擇影像，或是尚未運行 cv2，不運行按鈕
             if not self.filename or not self.cv2_gui: return
 
@@ -524,13 +567,14 @@ class My_MainWindow(QMainWindow, Ui_MainWindow):
             path = self.json_para['auto_save_path'] + '/' + self.default_filename + '_' + self.json_para[
                 'method'] + '_ani_curve.mp4'
 
+        # fig, ax = plt.subplots()
         # plt.xlabel('frame')
         if self.json_para['curve_bound'] != 0:
             plt.ylim(-self.json_para['curve_bound'], self.json_para['curve_bound'])
-            line, = ax.plot([0, 0], [-self.json_para['curve_bound'], self.json_para['curve_bound']], color='k',
+            line, = self.ax.plot([0, 0], [-self.json_para['curve_bound'], self.json_para['curve_bound']], color='k',
                                  alpha=0.2)
         else:
-            line, = ax.plot([0, 0], [0.4, -0.4], color='k', alpha=0.2)
+            line, = self.ax.plot([0, 0], [0.4, -0.4], color='k', alpha=0.2)
 
         # 設定動態更新
         def animate(i):
@@ -541,10 +585,9 @@ class My_MainWindow(QMainWindow, Ui_MainWindow):
         def init():
             line.set_xdata([0, 0])
             return line,
-        
-        fig, ax = plt.subplot()
+
         # 建立 animation 物件，frames = 影像數量， interval = 更新時間（ms）
-        ani = animation.FuncAnimation(fig=fig, func=animate, frames=self.num_of_img, init_func=init, interval=1000,
+        ani = animation.FuncAnimation(fig=self.fig, func=animate, frames=self.num_of_img, init_func=init, interval=1000,
                                       blit=False)
 
         ani.save("temp.gif", writer='imagemagick', fps=20)
@@ -656,27 +699,57 @@ class My_MainWindow(QMainWindow, Ui_MainWindow):
             self.clicked_btn_path(files=[file])
             self.clicked_btn_run(multi_mode=True)
 
-
+    # 切換使用者的功能
     def action_user_tk_change(self):
         if self.action_user_tk.isChecked():
             self.action_user_yuwen.setChecked(False)
+            self.action_user_ishan.setChecked(False)
             self.json_para['user'] = "tk"
+
+            # 暫時借放
+            self.menuYuwen.menuAction().setVisible(False)
         else:
             self.json_para['user'] = ""
-
         self.use_json(mode='write')
 
     def action_user_yuwen_change(self):
         if self.action_user_yuwen.isChecked():
             self.action_user_tk.setChecked(False)
+            self.action_user_ishan.setChecked(False)
             self.json_para['user'] = "yuwen"
+
+            self.menuYuwen.menuAction().setVisible(True)
         else:
             self.json_para['user'] = ""
+            self.menuYuwen.menuAction().setVisible(False)
+        self.use_json(mode='write')
 
+    def action_user_ishan_change(self):
+        if self.action_user_ishan.isChecked():
+            self.action_user_tk.setChecked(False)
+            self.action_user_yuwen.setChecked(False)
+            self.json_para['user'] = "ishan"
+
+            # 暫時借放
+            self.menuYuwen.menuAction().setVisible(False)
+        else:
+            self.json_para['user'] = ""
         self.use_json(mode='write')
 
 
+    def action_resize_input_triggered(self):
+        if not self.filename:
+            return
 
+        scaling, okPressed = QInputDialog.getInt(self, "Scaling", "ratio (%):", 100, 10, 200, 1)
+        new_h = (self.h * scaling)//100
+        new_w = (self.w * scaling)//100
+
+        self.IMGS = np.array([cv2.resize(img, (new_w, new_h)) for img in self.IMGS])
+        self.img_preview = self.IMGS[0]
+        self.h = new_h
+        self.w = new_w
+        self.scaling = scaling
 
     def radio_btn_line_change(self):
         if self.radioButton_line.isChecked():
@@ -689,7 +762,7 @@ class My_MainWindow(QMainWindow, Ui_MainWindow):
         if not self.filename or not self.cv2_gui:
             return
 
-        if self.mode == 'line':
+        if self.mode == 'line' or self.mode == 'ishan':
             self.plot_strain_curve()
 
     # 更改
@@ -772,6 +845,7 @@ class My_MainWindow(QMainWindow, Ui_MainWindow):
             saved_points = json.loads(f.read())
 
         name = os.path.split(self.json_para['path'])[-1] + '_' + str(self.date) + '_' + self.filename + self.extension
+        name += "" if self.mode != "ishan" else "_ishan"
         saved_points[name] = self.textBrowser_labeled_points.toPlainText()
 
         with open('./saved_points.json', 'w') as f:
@@ -789,7 +863,6 @@ class My_MainWindow(QMainWindow, Ui_MainWindow):
     def spinBox_target_frame_chane(self, x):
         if not self.cv2_gui:
             return
-
         self.plot_strain_curve(axv=x)
 
     def use_json(self, mode='write'):

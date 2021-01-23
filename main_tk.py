@@ -26,7 +26,7 @@ gui_tool = GuiTools()
 # TODO
 def load_file(mw):
     files, filetype = QFileDialog.getOpenFileNames(mw, "選擇文件", mw.default_path,  # 起始路径
-                                                       "All Files (*);;Dicom Files (*.dcm);;Png Files (*.png);;JPEG Files (*.jpeg)")
+                                                       "All Files (*);;Png Files (*.png);;JPEG Files (*.jpeg)")
     # 如果沒讀到檔案
     if len(files) == 0: return
 
@@ -131,6 +131,9 @@ def load_file(mw):
     # 清空 points
     mw.textBrowser_labeled_points.setText('')
     mw.textBrowser_auto_add_point.setText('')
+
+    # Scaling 初始化
+    mw.scaling = 100
 
     with open('saved_points.json', 'r') as f:
         saved_points = json.loads(f.read())
@@ -247,12 +250,7 @@ def run_cv2(mw, multi_mode=False):
                     mw.cv2_gui.result_distance[1] if len(mw.cv2_gui.result_distance) > 1 else
                     mw.cv2_gui.result_distance[0])
 
-                # 畫 curve，如果是郁文用的就自動偵測
-                if mw.action_user_yuwen.isChecked():
-                    mw.spinBox_target_frame.setValue(target_frame)
-                    mw.plot_strain_curve(target_frame)
-                else:
-                    mw.plot_strain_curve(0)
+                mw.plot_strain_curve(0)
 
                 # 自動存檔？
                 if mw.checkBox_auto_save.isChecked(): mw.auto_save_files()
@@ -348,6 +346,8 @@ class Cv2Line_tk():
         self.search_shift = []
         self.result_point = {}
         self.result_distance = {}
+        self.result_dx = {}
+        self.result_dy = {}
         self.result_strain = {}
 
         # 顯示
@@ -371,6 +371,8 @@ class Cv2Line_tk():
         self.search_shift = []
         self.result_point = {}
         self.result_distance = {}
+        self.result_dx = {}
+        self.result_dy = {}
         self.result_strain = {}
 
         print('Reseting complete.')
@@ -413,7 +415,7 @@ class Cv2Line_tk():
             cv2.line(temp_img, self.point1, (x, y), self.current_color, thickness=self.line_bold)
 
             # 計算距離、顯示距離的座標
-            text_point, d = cv2_tool.count_distance(self.point1, (x, y), self.delta)
+            text_point, d, dx, dy = cv2_tool.count_distance(self.point1, (x, y), self.delta)
             font = cv2.FONT_HERSHEY_SIMPLEX
             if self.font_show:
                 cv2.putText(temp_img, '{:4.3f}{}'.format(d, '(p)' if self.delta_x == 0 else ''), text_point, font,
@@ -437,7 +439,7 @@ class Cv2Line_tk():
                 cv2.circle(self.img_label[self.current_page], self.point2, 0, self.current_color, thickness=2)
 
                 # 計算距離 -> 尚未加入 List
-                text_point, d = cv2_tool.count_distance(self.point1, self.point2, self.delta)
+                text_point, d, dx, dy = cv2_tool.count_distance(self.point1, self.point2, self.delta)
                 font = cv2.FONT_HERSHEY_SIMPLEX
                 if self.font_show:
                     cv2.putText(self.img_label[self.current_page],
@@ -466,6 +468,8 @@ class Cv2Line_tk():
 
                 # 先將第一點的距離輸入結果
                 self.result_distance[self.color_index] = [d]
+                self.result_dx[self.color_index] = [dx]
+                self.result_dy[self.color_index] = [dy]
 
                 # 更新顏色
                 self.color_index += 1
@@ -533,7 +537,7 @@ class Cv2Line_tk():
         cv2.circle(self.img_label[self.current_page], point2, 2, self.current_color, thickness=-1)
 
         # 計算距離 -> 尚未加入 List TODO
-        text_point, d = cv2_tool.count_distance(point1, point2, self.delta)
+        text_point, d, dx, dy = cv2_tool.count_distance(point1, point2, self.delta)
         font = cv2.FONT_HERSHEY_SIMPLEX
         if self.font_show:
             cv2.putText(self.img_label[self.current_page], '{:4.3f}{}'.format(d, '(p)' if self.delta_x == 0 else ''),
@@ -560,6 +564,8 @@ class Cv2Line_tk():
 
         # 先將第一點的距離輸入結果
         self.result_distance[self.color_index] = [d]
+        self.result_dx[self.color_index] = [dx]
+        self.result_dy[self.color_index] = [dy]
 
         self.color_index += 1
         self.current_color = self.colors[self.color_index]
@@ -602,18 +608,21 @@ class Cv2Line_tk():
 
                     # 畫線、計算（顯示）距離
                     cv2.line(img_label, result_tem, result, color, thickness=self.line_bold)
-                    text_point, d = cv2_tool.count_distance(result_tem, result, self.delta)
+                    text_point, d, dx, dy = cv2_tool.count_distance(result_tem, result, self.delta)
                     if self.font_show:
                         cv2.putText(img_label, '{:4.3f}{}'.format(d, '(p)' if self.delta_x == 0 else ''),
                                     text_point,
                                     cv2.FONT_HERSHEY_SIMPLEX, self.font_size, (255, 255, 255), self.font_bold)
                     self.result_distance[j // 2].append(d)
-            
+                    self.result_dx[j // 2].append(dx)
+                    self.result_dy[j // 2].append(dy)
+
             # cv2.imshow('test', img_label)
             # cv2.waitKey(0)
             videowriter.write(gui_tool.add_page_single(img_label, i, len(self.mw.files)))
             if i < len(self.img_label): self.img_label[i] = np.copy(img_label)
 
+            # progress_bar
             self.show_progress_bar(np.copy(self.img_label[0]), progress_fraction, progress_denominator, pos='top')
 
         videowriter.release()

@@ -44,7 +44,7 @@ def load_file(mw, files=None):   # mw = main window
     if mw.extension == '.dcm':
         file = files[0]
         browse_path = file
-        mw.default_path, mw.default_filename = os.path.split(browse_path)
+        mw.default_path, mw.default_filename = os.path.split(file)
         mw.default_filename = mw.default_filename.split('.')[0]
         mw.filename = os.path.splitext(os.path.split(file)[-1])[0]
 
@@ -109,14 +109,12 @@ def load_file(mw, files=None):   # mw = main window
 
 
     # 如果讀到圖檔
-    elif mw.extension == '.png' or mw.extension == '.jpg' or mw.extension == '.jpeg' or mw.extension == '.mp4' or mw.extension == '.avi':
+    elif mw.extension == '.png' or mw.extension == '.jpg' or mw.extension == '.jpeg' or mw.extension == '.mp4' or mw.extension == '.avi' or mw.extension == '.mov':
 
         browse_path = os.path.split(files[0])[0]
         mw.filename = os.path.split(browse_path)[-1]
 
-
-
-        if mw.extension == '.mp4' or mw.extension == '.avi':
+        if mw.extension == '.mp4' or mw.extension == '.avi' or mw.extension == '.mov':
             mw.filename = os.path.splitext(os.path.split(files[0])[-1])[0]
             capture = cv2.VideoCapture(files[0])
             ret, frame = capture.read()
@@ -141,7 +139,7 @@ def load_file(mw, files=None):   # mw = main window
                 mw.IMGS = cv2.merge([mw.IMGS, mw.IMGS, mw.IMGS])
 
         # 輸出影向預設的路徑與檔案名稱
-        mw.default_path = os.path.split(browse_path)[0]
+        mw.default_path = browse_path
         mw.default_filename = mw.filename
 
         mw.img_preview = mw.IMGS[0]
@@ -217,6 +215,9 @@ def load_file(mw, files=None):   # mw = main window
     mw.textBrowser_labeled_points.setText('')
     mw.textBrowser_auto_add_point.setText('')
 
+    # Scaling 初始化
+    mw.scaling = 100
+
     with open('saved_points.json', 'r') as f:
         saved_points = json.loads(f.read())
         name = os.path.split(mw.json_para['path'])[-1] + '_' + str(
@@ -278,6 +279,11 @@ def run_cv2(mw, multi_mode=False):
                     # for point in add_points:
                     x1, y1, x2, y2 = add_points[i], add_points[i + 1], add_points[i + 2], add_points[i + 3]
                     x1, y1, x2, y2 = int(x1), int(y1), int(x2), int(y2)
+                    if mw.scaling != 100:
+                        x1 = (x1 * mw.scaling) // 100
+                        y1 = (y1 * mw.scaling) // 100
+                        x2 = (x2 * mw.scaling) // 100
+                        y2 = (y2 * mw.scaling) // 100
                     mw.cv2_gui.addPoint((x1, y1), (x2, y2))
                     # 如果下次的四個點無法算完
                     if i + 8 > len(add_points): break
@@ -297,9 +303,8 @@ def run_cv2(mw, multi_mode=False):
     mw.use_json('write')
 
     ###################### 主程式運行 ######################
+    cv2.setMouseCallback(mw.cv2_gui.window_name, mw.cv2_gui.click_event)  # 設定滑鼠回饋事件
     while True:
-        cv2.setMouseCallback(mw.cv2_gui.window_name, mw.cv2_gui.click_event)  # 設定滑鼠回饋事件
-
         action = gui_tool.find_action(cv2.waitKey(1))  # 設定鍵盤回饋事件
 
         # 「esc」 跳出迴圈
@@ -332,26 +337,29 @@ def run_cv2(mw, multi_mode=False):
 
                     mw.spinBox_target_frame.setValue(target_frame)
                     mw.plot_strain_curve(target_frame)
+
+                    # 輸出 console
+                    mw.console_nb += "\t".join(['{:.3f}'.format(mw.cv2_gui.result_distance[k][0]) for k in
+                                                mw.cv2_gui.result_distance.keys()][::-1]) + '\n'
+                    mw.console_after += "\t".join(
+                        ['{:.3f}'.format(mw.cv2_gui.result_distance[k][target_frame]) for k in
+                         mw.cv2_gui.result_distance.keys()][::-1]) + '\n'
+                    mw.console_text = 'NB:\n' + mw.console_nb + '\nAfter:\n' + mw.console_after + '\n'
+
+                    mw.console_text += 'Result Points:\n'
+                    for k in range(len(mw.cv2_gui.result_point)):
+                        if k % 2 == 1:
+                            mw.console_text += f"{mw.cv2_gui.result_point[k - 1][target_frame]}, {mw.cv2_gui.result_point[k][target_frame]}\n"
+
+                    mw.textBrowser_target_frame.setText(mw.console_text)
+
                 else:
                     mw.plot_strain_curve(0)
 
                 # 自動存檔？
                 if mw.checkBox_auto_save.isChecked(): mw.auto_save_files()
 
-                mw.console_nb += "\t".join(['{:.3f}'.format(mw.cv2_gui.result_distance[k][0]) for k in
-                                              mw.cv2_gui.result_distance.keys()][::-1]) + '\n'
-                mw.console_after += "\t".join(
-                    ['{:.3f}'.format(mw.cv2_gui.result_distance[k][target_frame]) for k in
-                     mw.cv2_gui.result_distance.keys()][::-1]) + '\n'
-                mw.console_text = 'NB:\n' + mw.console_nb + '\nAfter:\n' + mw.console_after + '\n'
-
-                mw.console_text += 'Result Points:\n'
-                for k in range(len(mw.cv2_gui.result_point)):
-                    if k % 2 == 1:
-                        mw.console_text += f"{mw.cv2_gui.result_point[k - 1][target_frame]}, {mw.cv2_gui.result_point[k][target_frame]}\n"
-
-                mw.textBrowser_target_frame.setText(mw.console_text)
-
+                # 快速 Tracking
                 if multi_mode: break
 
             # Point 模式不動作

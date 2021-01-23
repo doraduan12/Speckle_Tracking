@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>838</width>
+    <width>836</width>
     <height>914</height>
    </rect>
   </property>
@@ -356,7 +356,7 @@
       <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
      </property>
     </widget>
-    <widget class="QLabel" name="label_mm1">
+    <widget class="QLabel" name="label_unit1">
      <property name="geometry">
       <rect>
        <x>210</x>
@@ -367,11 +367,12 @@
      </property>
      <property name="font">
       <font>
+       <family>Calibri</family>
        <pointsize>8</pointsize>
       </font>
      </property>
      <property name="text">
-      <string>mm</string>
+      <string>unit</string>
      </property>
      <property name="textFormat">
       <enum>Qt::AutoText</enum>
@@ -380,7 +381,7 @@
       <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
      </property>
     </widget>
-    <widget class="QLabel" name="label_mm2">
+    <widget class="QLabel" name="label_unit2">
      <property name="geometry">
       <rect>
        <x>210</x>
@@ -391,11 +392,12 @@
      </property>
      <property name="font">
       <font>
+       <family>Calibri</family>
        <pointsize>8</pointsize>
       </font>
      </property>
      <property name="text">
-      <string>mm</string>
+      <string>unit</string>
      </property>
      <property name="textFormat">
       <enum>Qt::AutoText</enum>
@@ -415,6 +417,7 @@
      </property>
      <property name="font">
       <font>
+       <family>Calibri</family>
        <pointsize>9</pointsize>
       </font>
      </property>
@@ -439,6 +442,7 @@
      </property>
      <property name="font">
       <font>
+       <family>Calibri</family>
        <pointsize>9</pointsize>
       </font>
      </property>
@@ -463,6 +467,7 @@
      </property>
      <property name="font">
       <font>
+       <family>Calibri</family>
        <pointsize>8</pointsize>
       </font>
      </property>
@@ -487,6 +492,7 @@
      </property>
      <property name="font">
       <font>
+       <family>Calibri</family>
        <pointsize>8</pointsize>
       </font>
      </property>
@@ -677,8 +683,8 @@
     <zorder>label_frame_show</zorder>
     <zorder>label_filetype_show</zorder>
     <zorder>label_filetype</zorder>
-    <zorder>label_mm1</zorder>
-    <zorder>label_mm2</zorder>
+    <zorder>label_unit1</zorder>
+    <zorder>label_unit2</zorder>
     <zorder>label_template_block</zorder>
     <zorder>label_search_window</zorder>
     <zorder>label_pixel1</zorder>
@@ -937,6 +943,7 @@
        <widget class="QRadioButton" name="radioButton_line">
         <property name="font">
          <font>
+          <family>Calibri</family>
           <pointsize>10</pointsize>
          </font>
         </property>
@@ -952,6 +959,7 @@
        <widget class="QRadioButton" name="radioButton_draw">
         <property name="font">
          <font>
+          <family>Calibri</family>
           <pointsize>10</pointsize>
          </font>
         </property>
@@ -986,6 +994,7 @@
        <widget class="QRadioButton" name="radioButton_PPMCC">
         <property name="font">
          <font>
+          <family>Calibri</family>
           <pointsize>10</pointsize>
          </font>
         </property>
@@ -1007,6 +1016,7 @@
        <widget class="QRadioButton" name="radioButton_SAD">
         <property name="font">
          <font>
+          <family>Calibri</family>
           <pointsize>10</pointsize>
          </font>
         </property>
@@ -1249,6 +1259,7 @@
        <widget class="QRadioButton" name="radioButton_CC">
         <property name="font">
          <font>
+          <family>Calibri</family>
           <pointsize>10</pointsize>
          </font>
         </property>
@@ -1270,6 +1281,7 @@
        <widget class="QRadioButton" name="radioButton_Optical">
         <property name="font">
          <font>
+          <family>Calibri</family>
           <pointsize>10</pointsize>
          </font>
         </property>
@@ -1353,7 +1365,7 @@
          <x>0</x>
          <y>10</y>
          <width>201</width>
-         <height>71</height>
+         <height>73</height>
         </rect>
        </property>
        <layout class="QGridLayout" name="gridLayout">
@@ -1416,7 +1428,7 @@
          <x>0</x>
          <y>10</y>
          <width>201</width>
-         <height>71</height>
+         <height>73</height>
         </rect>
        </property>
        <layout class="QGridLayout" name="gridLayout_2">
@@ -1736,8 +1748,8 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>838</width>
-     <height>25</height>
+     <width>836</width>
+     <height>24</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">
@@ -1755,23 +1767,31 @@
     <addaction name="action_open_setting_file"/>
     <addaction name="action_open_saved_points"/>
    </widget>
-   <widget class="QMenu" name="menuOSA">
+   <widget class="QMenu" name="menuYuwen">
     <property name="title">
-     <string>Yuwen</string>
+     <string>Yuwen Tool</string>
     </property>
     <addaction name="action_multi_files"/>
    </widget>
-   <widget class="QMenu" name="menuTK">
+   <widget class="QMenu" name="menuUser">
     <property name="title">
      <string>User</string>
     </property>
     <addaction name="action_user_tk"/>
     <addaction name="action_user_yuwen"/>
+    <addaction name="action_user_ishan"/>
+   </widget>
+   <widget class="QMenu" name="menuTools">
+    <property name="title">
+     <string>Tools</string>
+    </property>
+    <addaction name="action_resize_input"/>
    </widget>
    <addaction name="menuFile"/>
    <addaction name="menuSetting"/>
-   <addaction name="menuOSA"/>
-   <addaction name="menuTK"/>
+   <addaction name="menuUser"/>
+   <addaction name="menuTools"/>
+   <addaction name="menuYuwen"/>
   </widget>
   <action name="action_version">
    <property name="text">
@@ -1823,6 +1843,22 @@
    </property>
    <property name="text">
     <string>yuwen</string>
+   </property>
+  </action>
+  <action name="action_resize_input">
+   <property name="checkable">
+    <bool>false</bool>
+   </property>
+   <property name="text">
+    <string>Resize Input</string>
+   </property>
+  </action>
+  <action name="action_user_ishan">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>ishan</string>
    </property>
   </action>
  </widget>

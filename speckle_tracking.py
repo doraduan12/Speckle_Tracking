@@ -64,7 +64,6 @@ class SpeckleTracking():
         result = cv2.matchTemplate(template, target_img, cv2.TM_CCOEFF_NORMED)
         # cv2.normalize(result, result, 0, 1, cv2.NORM_MINMAX, -1)
         min_val, max_val, min_loc, max_loc = cv2.minMaxLoc(result)
-        print(max_val)
 
         result_x, result_y = max_loc
         

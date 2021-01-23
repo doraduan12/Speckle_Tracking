@@ -19,7 +19,7 @@ class Cv2Line():
     def __init__(self, main_window, imgs: np, delta_x: float, delta_y: float, window_name: str,
                  temp_size: int, default_search: int, method: str, draw_delay: int, json_para: dict):
 
-        self.main_window = main_window
+        self.mw = main_window
         self.json_para = json_para
 
         self.IMGS = imgs
@@ -65,10 +65,14 @@ class Cv2Line():
         self.search_shift = []
         self.result_point = {}
         self.result_distance = {}
+        self.result_dx = {}
+        self.result_dy = {}
         self.result_strain = {}
 
         # 顯示
-        cv2.namedWindow(self.window_name, cv2.WINDOW_AUTOSIZE)
+        # cv2.namedWindow(self.window_name, cv2.WINDOW_AUTOSIZE)
+        cv2.namedWindow(self.window_name, cv2.WINDOW_NORMAL)
+        cv2.resizeWindow(self.window_name, self.mw.w, self.mw.h)
         cv2.createTrackbar('No', self.window_name, 0, self.num_of_img - 1, self.track_change)
         cv2.imshow(self.window_name, self.img_label[self.current_page])
         cv2.waitKey(1)
@@ -89,6 +93,8 @@ class Cv2Line():
         self.search_shift = []
         self.result_point = {}
         self.result_distance = {}
+        self.result_dx = {}
+        self.result_dy = {}
         self.result_strain = {}
 
         print('Reseting complete.')
@@ -131,7 +137,7 @@ class Cv2Line():
             cv2.line(temp_img, self.point1, (x, y), self.current_color, thickness=self.line_bold)
 
             # 計算距離、顯示距離的座標
-            text_point, d = cv2_tool.count_distance(self.point1, (x, y), self.delta)
+            text_point, d, dx, dy = cv2_tool.count_distance(self.point1, (x, y), self.delta)
             font = cv2.FONT_HERSHEY_SIMPLEX
             if self.font_show:
                 cv2.putText(temp_img, '{:4.3f}{}'.format(d, '(p)' if self.delta_x == 0 else ''), text_point, font,
@@ -155,7 +161,7 @@ class Cv2Line():
                 cv2.circle(self.img_label[self.current_page], self.point2, 0, self.current_color, thickness=2)
 
                 # 計算距離 -> 尚未加入 List
-                text_point, d = cv2_tool.count_distance(self.point1, self.point2, self.delta)
+                text_point, d, dx, dy = cv2_tool.count_distance(self.point1, self.point2, self.delta)
                 font = cv2.FONT_HERSHEY_SIMPLEX
                 if self.font_show:
                     cv2.putText(self.img_label[self.current_page],
@@ -184,15 +190,22 @@ class Cv2Line():
 
                 # 先將第一點的距離輸入結果
                 self.result_distance[self.color_index] = [d]
+                self.result_dx[self.color_index] = [dx]
+                self.result_dy[self.color_index] = [dy]
 
                 # 更新顏色
                 self.color_index += 1
                 self.current_color = self.colors[self.color_index % self.num_of_color]
 
                 # 更新座標
-                points_show = self.main_window.textBrowser_labeled_points.toPlainText()
-                points_show += f"{self.point1}, {self.point2},\n"
-                self.main_window.textBrowser_labeled_points.setText(points_show)
+                points_show = self.mw.textBrowser_labeled_points.toPlainText()
+                if self.mw.scaling == 100:
+                   points_show += f"{self.point1}, {self.point2},\n"
+                else:
+                    points_show += f"{((self.point1[0] * 100 // self.mw.scaling), (self.point1[1] * 100 // self.mw.scaling))}, " \
+                                   f"{((self.point2[0] * 100 // self.mw.scaling), (self.point2[1] * 100 // self.mw.scaling))},\n"
+
+                self.mw.textBrowser_labeled_points.setText(points_show)
 
         # 設定 Search Window（右鍵點擊時）
         if event == cv2.EVENT_RBUTTONDOWN:
@@ -251,7 +264,7 @@ class Cv2Line():
         cv2.circle(self.img_label[self.current_page], point2, 2, self.current_color, thickness=-1)
 
         # 計算距離 -> 尚未加入 List TODO
-        text_point, d = cv2_tool.count_distance(point1, point2, self.delta)
+        text_point, d, dx, dy = cv2_tool.count_distance(point1, point2, self.delta)
         font = cv2.FONT_HERSHEY_SIMPLEX
         if self.font_show:
             cv2.putText(self.img_label[self.current_page], '{:4.3f}{}'.format(d, '(p)' if self.delta_x == 0 else ''),
@@ -278,6 +291,8 @@ class Cv2Line():
 
         # 先將第一點的距離輸入結果
         self.result_distance[self.color_index] = [d]
+        self.result_dx[self.color_index] = [dx]
+        self.result_dy[self.color_index] = [dy]
 
         self.color_index += 1
         self.current_color = self.colors[self.color_index]
@@ -324,17 +339,19 @@ class Cv2Line():
 
                     # 畫線、計算（顯示）距離
                     cv2.line(self.img_label[i], p_last, result, color, thickness=self.line_bold)
-                    text_point, d = cv2_tool.count_distance(p_last, result, self.delta)
+                    text_point, d, dx, dy = cv2_tool.count_distance(p_last, result, self.delta)
                     if self.font_show:
                         cv2.putText(self.img_label[i], '{:4.3f}{}'.format(d, '(p)' if self.delta_x == 0 else ''),
                                     text_point,
                                     cv2.FONT_HERSHEY_SIMPLEX, self.font_size, (255, 255, 255), self.font_bold)
                     self.result_distance[j // 2].append(d)
+                    self.result_dx[j // 2].append(dx)
+                    self.result_dy[j // 2].append(dy)
 
                 if show:
                     self.show_progress_bar(self.img_label[i], progress_fraction, progress_denominator)
 
-            self.show_progress_bar(np.copy(self.img_label[0]), progress_fraction, progress_denominator)
+            self.show_progress_bar(np.copy(self.img_label[0]), progress_fraction, progress_denominator, pos='top')
 
         cv2.imshow(self.window_name, self.img_label[0])
         cv2.waitKey(1)
@@ -343,9 +360,13 @@ class Cv2Line():
             d_list = np.asarray(self.result_distance[i])
             self.result_strain[i] = list((d_list - d_list[0]) / d_list[0])
 
-    def show_progress_bar(self, img, fraction, denominator):
-        temp_img = cv2.line(np.copy(img), (0, self.h - 1), (((self.w - 1) * fraction) // denominator, self.h - 1),
+    def show_progress_bar(self, img, fraction, denominator, pos='down'):
+        if pos == 'down':
+            temp_img = cv2.line(np.copy(img), (0, self.h - 1), (((self.w - 1) * fraction) // denominator, self.h - 1),
                             (216, 202, 28), 5)
+        elif pos == 'top':
+            temp_img = cv2.line(np.copy(img), (0, 0), (((self.w - 1) * fraction) // denominator, 0),
+                                (216, 202, 28), 5)
         cv2.imshow(self.window_name, temp_img)
         cv2.waitKey(1)
 
@@ -357,7 +378,7 @@ class Cv2Point():
 
         self.IMGS = imgs
         self.window_name = window_name
-        self.main_window = main_window
+        self.mw = main_window
 
         self.current_page = 0
         self.default_search = default_search
@@ -382,7 +403,8 @@ class Cv2Point():
         self.result_point = {}
 
         # 顯示
-        cv2.namedWindow(self.window_name, cv2.WINDOW_AUTOSIZE)
+        cv2.namedWindow(self.window_name, cv2.WINDOW_NORMAL)
+        cv2.resizeWindow(self.window_name, self.mw.w, self.mw.h)
         cv2.createTrackbar('No', self.window_name, 0, self.num_of_img - 1, self.track_change)
         cv2.imshow(self.window_name, self.img_label[self.current_page])
         cv2.waitKey(1)
@@ -506,14 +528,18 @@ class Cv2Point():
                     # 進度條模式顯示
                     self.show_progress_bar(self.img_label[i], progress_fraction, progress_denominator)
 
-            self.show_progress_bar(np.copy(self.img_label[0]), progress_fraction, progress_denominator)
+            self.show_progress_bar(np.copy(self.img_label[0]), progress_fraction, progress_denominator, pos='top')
 
         cv2.imshow(self.window_name, self.img_label[0])
         cv2.waitKey(1)
 
-    def show_progress_bar(self, img, fraction, denominator):
-        temp_img = cv2.line(np.copy(img), (0, self.h - 1), (((self.w - 1) * fraction) // denominator, self.h - 1),
+    def show_progress_bar(self, img, fraction, denominator, pos='down'):
+        if pos == 'down':
+            temp_img = cv2.line(np.copy(img), (0, self.h - 1), (((self.w - 1) * fraction) // denominator, self.h - 1),
                             (216, 202, 28), 5)
+        elif pos == 'top':
+            temp_img = cv2.line(np.copy(img), (0, 0), (((self.w - 1) * fraction) // denominator, 0),
+                                (216, 202, 28), 5)
         cv2.imshow(self.window_name, temp_img)
         cv2.waitKey(1)
 
@@ -521,8 +547,11 @@ class Cv2Point():
 class SetDelta():
     def __init__(self, img):
         self.img = img
+        h, w = img.shape[:2]
         self.window_name = 'Set delta'
         self.undo = True
+        cv2.namedWindow(self.window_name, 0)
+        cv2.resizeWindow(self.window_name, w, h)
         cv2.imshow(self.window_name, self.img)
         cv2.waitKey(1)
 
