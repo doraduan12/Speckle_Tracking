@@ -879,6 +879,15 @@ class My_MainWindow(QMainWindow, Ui_MainWindow):
                     return json.loads(f.read())
 
 
+    # 離開程式確認
+    def closeEvent(self, event):
+        reply = QtWidgets.QMessageBox.question(self, u'警告', u'確定要退出嗎？', QtWidgets.QMessageBox.Yes,
+                                               QtWidgets.QMessageBox.No)
+        if reply == QtWidgets.QMessageBox.Yes:
+            event.accept()  # 關閉
+        else:
+            event.ignore()  # 忽略
+
 if __name__ == "__main__":
     app = QtWidgets.QApplication(sys.argv)
     window = My_MainWindow()
