@@ -564,8 +564,8 @@ class My_MainWindow(QMainWindow, Ui_MainWindow):
 
         # 如果是自動存檔呼叫的，指定路徑
         else:
-            path = self.json_para['auto_save_path'] + '/' + self.default_filename + '_' + self.json_para[
-                'method'] + '_ani_curve.mp4'
+            path = os.path.join(self.json_para['auto_save_path'],
+                            self.default_dirname + '_' + self.default_filename + '_' + self.json_para['method'] + '_ani_curve.mp4')
 
         # fig, ax = plt.subplots()
         # plt.xlabel('frame')
@@ -607,7 +607,8 @@ class My_MainWindow(QMainWindow, Ui_MainWindow):
         if not self.filename or not self.cv2_gui:
             return
 
-        path = self.json_para['auto_save_path'] + '/' + self.default_filename + '_' + self.json_para['method'] + '.all'
+        path = os.path.join(self.json_para['auto_save_path'],
+                            self.default_dirname + '_' + self.default_filename + '_' + self.json_para['method'] + '.all')
         if path.split('.')[-1] == 'all':
             path = path.split('.')[0]
 
@@ -887,6 +888,9 @@ class My_MainWindow(QMainWindow, Ui_MainWindow):
             event.accept()  # 關閉
         else:
             event.ignore()  # 忽略
+
+    def dropEvent(self, event):
+        print(event)
 
 if __name__ == "__main__":
     app = QtWidgets.QApplication(sys.argv)

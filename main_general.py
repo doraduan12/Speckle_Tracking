@@ -47,6 +47,7 @@ def load_file(mw, files=None):   # mw = main window
         mw.default_path, mw.default_filename = os.path.split(file)
         mw.default_filename = mw.default_filename.split('.')[0]
         mw.filename = os.path.splitext(os.path.split(file)[-1])[0]
+        mw.default_dirname = os.path.split(mw.default_path)[-1]
 
         dicom = pydicom.read_file(file)
         mw.IMGS = gui_tool.add_page(dicom.pixel_array)
@@ -141,6 +142,7 @@ def load_file(mw, files=None):   # mw = main window
         # 輸出影向預設的路徑與檔案名稱
         mw.default_path = browse_path
         mw.default_filename = mw.filename
+        mw.default_dirname = os.path.split(os.path.split(browse_path)[0])[-1]
 
         mw.img_preview = mw.IMGS[0]
         mw.num_of_img, mw.h, mw.w = mw.IMGS.shape[:3]
@@ -161,6 +163,10 @@ def load_file(mw, files=None):   # mw = main window
 
         msg.exec_()
         return
+
+    print(mw.default_path)
+    print(mw.default_filename)
+    print(mw.default_dirname)
 
     # 寫入 檔案路徑
     mw.textBrowser_browse.setText(browse_path)
